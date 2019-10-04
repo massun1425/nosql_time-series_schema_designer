@@ -20,13 +20,13 @@ module NoSE
       check_unknown_options!
 
       class_option :debug, type: :boolean, aliases: '-d',
-                           desc: 'enable detailed debugging information'
+                   desc: 'enable detailed debugging information'
       class_option :parallel, type: :boolean, default: false,
-                              desc: 'run various operations in parallel'
+                   desc: 'run various operations in parallel'
       class_option :colour, type: :boolean, default: nil, aliases: '-c',
-                            desc: 'enabled coloured output'
+                   desc: 'enabled coloured output'
       class_option :interactive, type: :boolean, default: true,
-                                 desc: 'allow actions which require user input'
+                   desc: 'allow actions which require user input'
 
       def initialize(_options, local_options, config)
         super
@@ -118,7 +118,7 @@ module NoSE
         enumerated_indexes = IndexEnumerator.new(workload) \
                                             .indexes_for_workload.to_a
         Search::Search.new(workload, cost_model, objective, by_id_graph) \
-                      .search_overlap enumerated_indexes, max_space
+                      .search_overlap enumerated_indexes, max_space, @options[:creation_cost]
       end
 
       # Load results of a previous search operation
@@ -163,25 +163,66 @@ module NoSE
       # @return [void]
       def output_indexes_txt(header, indexes, file)
         file.puts Formatador.parse("[blue]#{header}[/]")
-        indexes.sort_by(&:key).each { |index| file.puts index.inspect }
+        indexes.each_with_index do |index_set, ts|
+          file.puts Formatador.parse("[blue]for timestep: #{ts}[/]")
+          index_set.sort_by(&:key).each { |index| file.puts index.inspect }
+        end
         file.puts
       end
 
       # Output a list of query plans as text
       # @return [void]
       def output_plans_txt(plans, file, indent, weights)
-        plans.each do |plan|
-          weight = (plan.weight || weights[plan.query || plan.name])
-          next if weight.nil?
-          cost = plan.cost * weight
+        plans.each do |plan_for_all_timestep|
+          file.puts Formatador.parse("[yellow]============= query: #{plan_for_all_timestep[0].query.text} ============[/]")
+          plan_for_all_timestep.each_with_index do |plan, ts|
+            file.puts Formatador.parse("[blue]for timestep: #{ts}[/]")
+            weight = (plan.weight || weights[plan.query || plan.name])
+            next if weight.nil?
+            cost = plan.cost * weight[ts]
 
-          file.puts "GROUP #{plan.group}" unless plan.group.nil?
+            file.puts "GROUP #{plan.group}" unless plan.group.nil?
 
-          weight = " * #{weight} = #{cost}"
-          file.puts '  ' * (indent - 1) + plan.query.label \
+            weight = " * #{weight[ts]} = #{cost}"
+            file.puts '  ' * (indent - 1) + plan.query.label \
             unless plan.query.nil? || plan.query.label.nil?
-          file.puts '  ' * (indent - 1) + plan.query.inspect + weight
-          plan.each { |step| file.puts '  ' * indent + step.inspect }
+            file.puts '  ' * (indent - 1) + plan.query.inspect + weight
+            plan.each { |step| file.puts '  ' * indent + step.inspect }
+            file.puts
+          end
+        end
+      end
+
+      def output_migration_plans_txt(plans, file, indent)
+        header = "Migrate plans\n" + '━' * 50
+        file.puts Formatador.parse("[blue]#{header}[/]")
+        plans.sort_by{|mp| [mp.query.text, mp.start_time]}.each do |migrate_plan|
+          file.puts '  ' * (indent - 1) + migrate_plan.query.label \
+            unless migrate_plan.query.nil? || migrate_plan.query.label.nil?
+          file.puts '  ' * (indent - 1) + migrate_plan.query.inspect
+          file.puts Formatador.parse('  ' * indent + "[blue]timestep: #{migrate_plan.start_time} to #{migrate_plan.end_time}[/]")
+          file.puts Formatador.parse('  ' * indent + "[blue]obsolete plan: [/]")
+          migrate_plan.obsolete_plan.each { |step| file.puts '  ' * (indent + 1) + step.inspect }
+          file.puts Formatador.parse('  ' * indent + "[blue]new plan: [/]")
+          migrate_plan.new_plan.each { |step| file.puts '  ' * (indent + 1) + step.inspect }
+          file.puts
+        end
+      end
+
+      def output_plans_one_timestep_txt(plans, file, indent, weights, ts)
+        plans.each do |plan_for_all_timestep|
+          target_plan = plan_for_all_timestep[ts]
+          weight = (target_plan.weight || weights[target_plan.query || target_plan.name])
+          next if weight.nil?
+          cost = target_plan.cost * weight[ts]
+
+          file.puts "GROUP #{target_plan.group}" unless target_plan.group.nil?
+
+          weight = " * #{weight[ts]} = #{cost}"
+          file.puts '  ' * (indent - 1) + target_plan.query.label \
+          unless target_plan.query.nil? || target_plan.query.label.nil?
+          file.puts '  ' * (indent - 1) + target_plan.query.inspect + weight
+          target_plan.each { |step| file.puts '  ' * indent + step.inspect }
           file.puts
         end
       end
@@ -189,43 +230,51 @@ module NoSE
       # Output update plans as text
       # @return [void]
       def output_update_plans_txt(update_plans, file, weights, mix = nil)
-        unless update_plans.empty?
+        unless update_plans.all?{ |update_plan| update_plan.empty?}
           header = "Update plans\n" + '━' * 50
           file.puts Formatador.parse("[blue]#{header}[/]")
         end
 
-        update_plans.group_by(&:statement).each do |statement, plans|
-          weight = if weights.key?(statement)
-                     weights[statement]
-                   elsif weights.key?(statement.group)
-                     weights[statement.group]
-                   else
-                     weights[statement.group][mix]
-                   end
-          next if weight.nil?
+        update_plans.each_with_index do |update_plans_each_time, ts|
+          next if update_plans_each_time.empty?
 
-          total_cost = plans.sum_by(&:cost)
+          file.puts Formatador.parse("[red]=========== update plan for timestep: #{ts} ============[/]")
+          file.puts ""
+          update_plans_each_time.group_by(&:statement).each do |statement, plans|
+            weight = if weights.key?(statement)
+                       weights[statement]
+                     elsif weights.key?(statement.group)
+                       weights[statement.group]
+                     else
+                       weights[statement.group][mix]
+                     end
+            next if weight.nil?
 
-          file.puts "GROUP #{statement.group}" unless statement.group.nil?
+            total_cost = plans.sum_by(&:cost)
 
-          file.puts statement.label unless statement.label.nil?
-          file.puts "#{statement.inspect} * #{weight} = #{total_cost * weight}"
-          plans.each do |plan|
-            file.puts Formatador.parse(" for [magenta]#{plan.index.key}[/] " \
+            file.puts "GROUP #{statement.group}" unless statement.group.nil?
+
+            file.puts statement.label unless statement.label.nil?
+            file.puts "#{statement.inspect} * #{weight.inspect} = " +
+                        "#{weight.is_a?(Array) ? weight.map{|w| total_cost * w}.inject(:+)
+                             : total_cost * weight}"
+            plans.each do |plan|
+              file.puts Formatador.parse(" for [magenta]#{plan.index.key}[/] " \
                                        "[yellow]$#{plan.cost}[/]")
-            query_weights = Hash[plan.query_plans.map do |query_plan|
-              [query_plan.query, weight]
-            end]
-            output_plans_txt plan.query_plans, file, 2, query_weights
+              query_weights = Hash[plan.query_plans.flatten(1).map do |query_plan|
+                [query_plan.query, weight]
+              end]
+              output_plans_one_timestep_txt plan.query_plans, file, 2, query_weights, ts
 
-            plan.update_steps.each do |step|
-              file.puts '  ' + step.inspect
+              plan.update_steps.each do |step|
+                file.puts '  ' + step.inspect
+              end
+
+              file.puts
             end
 
-            file.puts
+            file.puts "\n"
           end
-
-          file.puts "\n"
         end
       end
 
@@ -238,7 +287,6 @@ module NoSE
           output_indexes_txt header, result.enumerated_indexes, file
         end
 
-        # Output selected indexes
         header = "Indexes\n" + '━' * 50
         output_indexes_txt header, result.indexes, file
 
@@ -255,6 +303,8 @@ module NoSE
         result.update_plans = [] if result.update_plans.nil?
         output_update_plans_txt result.update_plans, file, weights,
                                 result.workload.mix
+
+        output_migration_plans_txt result.migrate_plans, file, 1
 
         file.puts Formatador.parse('  Total cost: ' \
                                    "[blue]#{result.total_cost}[/]\n")

@@ -2,4 +2,8 @@
 
 source 'https://rubygems.org'
 
+gem 'nose','0.1.2', :path => './NoSE'
+gem 'yard'
+gem 'yard-thor', '~> 0.0.1'
+
 gemspec

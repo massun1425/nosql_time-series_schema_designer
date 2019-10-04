@@ -23,6 +23,9 @@ module NoSE
       option :max_space, type: :numeric, default: Float::INFINITY,
                          aliases: '-s',
                          desc: 'maximum space allocated to indexes'
+      option :creation_cost, type: :numeric, default: 0.00001,
+             aliases: '-c',
+             desc: 'creation cost coefficient of column family'
       option :enumerated, type: :boolean, default: false, aliases: '-e',
                           desc: 'whether enumerated indexes should be output'
       option :read_only, type: :boolean, default: false,
