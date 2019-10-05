@@ -10,7 +10,7 @@ PATH
       thor (~> 0.19.4)
 
 PATH
-  remote: NoSE
+  remote: td_NoSE
   specs:
     nose (0.1.2)
       cassandra-driver (~> 3.2.3, >= 3.1.0)
