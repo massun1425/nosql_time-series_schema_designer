@@ -76,8 +76,6 @@ module NoSE
           backend = get_backend options, result
           send(('output_' + options[:format]).to_sym,
                result, file, options[:enumerated], backend)
-        rescue
-          nil
         ensure
           file.close unless options[:output].nil?
         end

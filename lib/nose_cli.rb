@@ -261,7 +261,7 @@ module NoSE
             plans.each do |plan|
               file.puts Formatador.parse(" for [magenta]#{plan.index.key}[/] " \
                                        "[yellow]$#{plan.cost}[/]")
-              query_weights = Hash[plan.query_plans.flatten(1).map do |query_plan|
+              query_weights = Hash[plan.query_plans.flatten(1).compact.map do |query_plan|
                 [query_plan.query, weight]
               end]
               output_plans_one_timestep_txt plan.query_plans, file, 2, query_weights, ts
@@ -307,7 +307,7 @@ module NoSE
         output_migration_plans_txt result.migrate_plans, file, 1
 
         file.puts Formatador.parse('  Total cost: ' \
-                                   "[blue]#{result.total_cost}[/]\n")
+                                   "[blue]#{result.each_total_cost}[/]\n")
       end
 
       # Output an HTML file with a description of the search results
