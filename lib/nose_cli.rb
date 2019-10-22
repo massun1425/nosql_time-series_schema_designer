@@ -161,7 +161,7 @@ module NoSE
 
       # Output a list of indexes as text
       # @return [void]
-      def output_indexes_txt(header, indexes, file)
+      def time_depend_output_indexes_txt(header, indexes, file)
         file.puts Formatador.parse("[blue]#{header}[/]")
         indexes.each_with_index do |index_set, ts|
           file.puts Formatador.parse("[blue]for timestep: #{ts}[/]")
@@ -170,9 +170,17 @@ module NoSE
         file.puts
       end
 
-      # Output a list of query plans as text
+      # Output a list of indexes as text
+        # @return [void]
+      def output_indexes_txt(header, indexes, file)
+        file.puts Formatador.parse("[blue]#{header}[/]")
+        indexes.sort_by(&:key).each { |index| file.puts index.inspect }
+        file.puts
+      end
+
+        # Output a list of query plans as text
       # @return [void]
-      def output_plans_txt(plans, file, indent, weights)
+      def time_depend_output_plans_txt(plans, file, indent, weights)
         plans.each do |plan_for_all_timestep|
           file.puts Formatador.parse("[yellow]============= query: #{plan_for_all_timestep[0].query.text} ============[/]")
           plan_for_all_timestep.each_with_index do |plan, ts|
@@ -190,6 +198,25 @@ module NoSE
             plan.each { |step| file.puts '  ' * indent + step.inspect }
             file.puts
           end
+        end
+      end
+
+      # Output a list of query plans as text
+      # @return [void]
+      def output_plans_txt(plans, file, indent, weights)
+        plans.each do |plan|
+          weight = (plan.weight || weights[plan.query || plan.name])
+          next if weight.nil?
+          cost = plan.cost * weight
+
+          file.puts "GROUP #{plan.group}" unless plan.group.nil?
+
+          weight = " * #{weight} = #{cost}"
+          file.puts '  ' * (indent - 1) + plan.query.label \
+            unless plan.query.nil? || plan.query.label.nil?
+          file.puts '  ' * (indent - 1) + plan.query.inspect + weight
+          plan.each { |step| file.puts '  ' * indent + step.inspect }
+          file.puts
         end
       end
 
@@ -229,7 +256,7 @@ module NoSE
 
       # Output update plans as text
       # @return [void]
-      def output_update_plans_txt(update_plans, file, weights, mix = nil)
+      def time_depend_output_update_plans_txt(update_plans, file, weights, mix = nil)
         unless update_plans.all?{ |update_plan| update_plan.empty?}
           header = "Update plans\n" + '━' * 50
           file.puts Formatador.parse("[blue]#{header}[/]")
@@ -278,6 +305,49 @@ module NoSE
         end
       end
 
+      # Output update plans as text
+      # @return [void]
+      def output_update_plans_txt(update_plans, file, weights, mix = nil)
+        unless update_plans.empty?
+          header = "Update plans\n" + '━' * 50
+          file.puts Formatador.parse("[blue]#{header}[/]")
+        end
+
+        update_plans.group_by(&:statement).each do |statement, plans|
+          weight = if weights.key?(statement)
+                     weights[statement]
+                   elsif weights.key?(statement.group)
+                     weights[statement.group]
+                   else
+                     weights[statement.group][mix]
+                   end
+          next if weight.nil?
+
+          total_cost = plans.sum_by(&:cost)
+
+          file.puts "GROUP #{statement.group}" unless statement.group.nil?
+
+          file.puts statement.label unless statement.label.nil?
+          file.puts "#{statement.inspect} * #{weight} = #{total_cost * weight}"
+          plans.each do |plan|
+            file.puts Formatador.parse(" for [magenta]#{plan.index.key}[/] " \
+                                       "[yellow]$#{plan.cost}[/]")
+            query_weights = Hash[plan.query_plans.map do |query_plan|
+              [query_plan.query, weight]
+            end]
+            output_plans_txt plan.query_plans, file, 2, query_weights
+
+            plan.update_steps.each do |step|
+              file.puts '  ' + step.inspect
+            end
+
+            file.puts
+          end
+
+          file.puts "\n"
+        end
+      end
+
       # Output the results of advising as text
       # @return [void]
       def output_txt(result, file = $stdout, enumerated = false,
@@ -288,7 +358,11 @@ module NoSE
         end
 
         header = "Indexes\n" + '━' * 50
-        output_indexes_txt header, result.indexes, file
+        if result.is_a? NoSE::Search::TimeDependResults
+          time_depend_output_indexes_txt header, result.indexes, file
+        else
+          output_indexes_txt header, result.indexes, file
+        end
 
         file.puts Formatador.parse('  Total size: ' \
                                    "[blue]#{result.total_size}[/]\n\n")
@@ -298,16 +372,29 @@ module NoSE
         file.puts Formatador.parse("[blue]#{header}[/]")
         weights = result.workload.statement_weights
         weights = result.weights if weights.nil? || weights.empty?
-        output_plans_txt result.plans, file, 1, weights
+
+        if result.is_a? NoSE::Search::TimeDependResults
+          time_depend_output_plans_txt result.plans, file, 1, weights
+        else
+          output_plans_txt result.plans, file, 1, weights
+        end
 
         result.update_plans = [] if result.update_plans.nil?
-        output_update_plans_txt result.update_plans, file, weights,
-                                result.workload.mix
+        if result.is_a? NoSE::Search::TimeDependResults
+          time_depend_output_update_plans_txt result.update_plans, file, weights,
+                                  result.workload.mix
+        else
+          output_update_plans_txt result.update_plans, file, weights,
+                                  result.workload.mix
+        end
 
-        output_migration_plans_txt result.migrate_plans, file, 1
+        if result.is_a? NoSE::Search::TimeDependResults
+          output_migration_plans_txt result.migrate_plans, file, 1
+        end
 
         file.puts Formatador.parse('  Total cost: ' \
-                                   "[blue]#{result.each_total_cost}[/]\n")
+                                   "[blue]#{result.is_a?(NoSE::Search::TimeDependResults) \
+                                    ? result.each_total_cost : result.total_cost}[/]\n")
       end
 
       # Output an HTML file with a description of the search results
