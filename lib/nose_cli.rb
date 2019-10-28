@@ -159,6 +159,42 @@ module NoSE
         [result, backend]
       end
 
+      def load_time_depend_results(plan_file, mix = 'default')
+        representer = Serialize::SearchTimeDependResultRepresenter.represent \
+          Search::TimeDependResults.new
+        file = File.read(plan_file)
+
+        case File.extname(plan_file)
+        when '.json'
+          result = representer.from_json(file)
+        when '.rb'
+          result = Search::Results.new
+          workload = binding.eval file, plan_file
+          result.instance_variable_set :@workload, workload
+        end
+
+        result.workload.mix = mix.to_sym unless \
+          mix.nil? || (mix == 'default' && result.workload.mix != :default)
+
+        result
+      end
+
+      # Load plans either from an explicit file or the name
+      # of something in the plans/ directory
+      def load_time_depend_plans(plan_file, options)
+        if File.exist? plan_file
+          result = load_time_depend_results(plan_file, options[:mix])
+        else
+          schema = Schema.load plan_file
+          result = OpenStruct.new
+          result.workload = Workload.new schema.model
+          result.indexes = schema.indexes.values
+        end
+        backend = get_backend(options, result)
+
+        [result, backend]
+      end
+
       # Output a list of indexes as text
       # @return [void]
       def time_depend_output_indexes_txt(header, indexes, file)
@@ -171,14 +207,14 @@ module NoSE
       end
 
       # Output a list of indexes as text
-        # @return [void]
+      # @return [void]
       def output_indexes_txt(header, indexes, file)
         file.puts Formatador.parse("[blue]#{header}[/]")
         indexes.sort_by(&:key).each { |index| file.puts index.inspect }
         file.puts
       end
 
-        # Output a list of query plans as text
+      # Output a list of query plans as text
       # @return [void]
       def time_depend_output_plans_txt(plans, file, indent, weights)
         plans.each do |plan_for_all_timestep|
@@ -237,8 +273,7 @@ module NoSE
       end
 
       def output_plans_one_timestep_txt(plans, file, indent, weights, ts)
-        plans.each do |plan_for_all_timestep|
-          target_plan = plan_for_all_timestep[ts]
+        plans.each do |target_plan|
           weight = (target_plan.weight || weights[target_plan.query || target_plan.name])
           next if weight.nil?
           cost = target_plan.cost * weight[ts]
@@ -262,12 +297,11 @@ module NoSE
           file.puts Formatador.parse("[blue]#{header}[/]")
         end
 
-        update_plans.each_with_index do |update_plans_each_time, ts|
-          next if update_plans_each_time.empty?
-
-          file.puts Formatador.parse("[red]=========== update plan for timestep: #{ts} ============[/]")
-          file.puts ""
-          update_plans_each_time.group_by(&:statement).each do |statement, plans|
+        update_plans.each do |statement, update_plans_all_time|
+          file.puts Formatador.parse("[yellow]=========== #{statement.inspect} ============[/]")
+          update_plans_all_time.each_with_index do |plans, ts|
+            next if plans.empty?
+            file.puts Formatador.parse("[blue]=========== for timestep: #{ts} ============[/]")
             weight = if weights.key?(statement)
                        weights[statement]
                      elsif weights.key?(statement.group)
@@ -288,7 +322,7 @@ module NoSE
             plans.each do |plan|
               file.puts Formatador.parse(" for [magenta]#{plan.index.key}[/] " \
                                        "[yellow]$#{plan.cost}[/]")
-              query_weights = Hash[plan.query_plans.flatten(1).compact.map do |query_plan|
+              query_weights = Hash[plan.query_plans.map do |query_plan|
                 [query_plan.query, weight]
               end]
               output_plans_one_timestep_txt plan.query_plans, file, 2, query_weights, ts
@@ -382,7 +416,7 @@ module NoSE
         result.update_plans = [] if result.update_plans.nil?
         if result.is_a? NoSE::Search::TimeDependResults
           time_depend_output_update_plans_txt result.update_plans, file, weights,
-                                  result.workload.mix
+                                              result.workload.mix
         else
           output_update_plans_txt result.update_plans, file, weights,
                                   result.workload.mix
@@ -433,8 +467,13 @@ module NoSE
           result.delete_field :enumerated_indexes
         end
 
-        file.puts JSON.pretty_generate \
+        if result.is_a? NoSE::Search::TimeDependResults
+          file.puts JSON.pretty_generate \
+          Serialize::SearchTimeDependResultRepresenter.represent(result).to_hash
+        else
+          file.puts JSON.pretty_generate \
           Serialize::SearchResultRepresenter.represent(result).to_hash
+        end
 
         result.enumerated_indexes = enumerated if enumerated
       end
@@ -480,6 +519,7 @@ require_relative 'nose_cli/shared_options'
 # Require the various subcommands
 require_relative 'nose_cli/analyze'
 require_relative 'nose_cli/benchmark'
+require_relative 'nose_cli/td_benchmark'
 require_relative 'nose_cli/collect_results'
 require_relative 'nose_cli/create'
 require_relative 'nose_cli/diff_plans'
