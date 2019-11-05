@@ -265,9 +265,13 @@ module NoSE
           file.puts '  ' * (indent - 1) + migrate_plan.query.inspect
           file.puts Formatador.parse('  ' * indent + "[blue]timestep: #{migrate_plan.start_time} to #{migrate_plan.end_time}[/]")
           file.puts Formatador.parse('  ' * indent + "[blue]obsolete plan: [/]")
-          migrate_plan.obsolete_plan.each { |step| file.puts '  ' * (indent + 1) + step.inspect }
+          migrate_plan.obsolete_plan&.each { |step| file.puts '  ' * (indent + 1) + step.inspect }
           file.puts Formatador.parse('  ' * indent + "[blue]new plan: [/]")
-          migrate_plan.new_plan.each { |step| file.puts '  ' * (indent + 1) + step.inspect }
+          migrate_plan.new_plan&.each { |step| file.puts '  ' * (indent + 1) + step.inspect }
+          migrate_plan.prepare_plans.each do |prepare_plan|
+            file.puts Formatador.parse('  ' * indent + "[blue]prepare plan: for #{prepare_plan.index.inspect}[/]")
+            prepare_plan.query_plan.each { |step| file.puts '  ' * (indent + 1) + step.inspect }
+          end
           file.puts
         end
       end

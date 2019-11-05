@@ -58,11 +58,10 @@ module NoSE
         result, backend = load_time_depend_plans plan_file, options
         loader = get_class('loader', options).new result.workload, backend
         backend.clear_keyspace
-        sleep(1)
         set_up_db(result, backend, loader)
 
         (0...result.timesteps).each do |timestep|
-          puts "\e[33m timestep: #{timestep} ================================== \e[0m"
+          puts "\e[33m timestep: #{timestep} ===================================================== \e[0m"
 
           indexes_for_this_timestep = result.time_depend_indexes.indexes_all_timestep[timestep].indexes
           index_values = index_values indexes_for_this_timestep, backend,
@@ -99,7 +98,10 @@ module NoSE
             weight = result.workload.statement_weights[update]
             next unless weight
 
-            plans = (result.update_plans || []).select do |possible_plan|
+            update_plans = result.time_depend_update_plans
+                             .map{|tdup| tdup.plans_all_timestep[timestep].plans}
+                             .flatten(1)
+            plans = (update_plans || []).select do |possible_plan|
               possible_plan.statement == update
             end
             next if plans.empty?
@@ -167,7 +169,7 @@ module NoSE
         indexes = result.time_depend_indexes.indexes_all_timestep.first.indexes
         # Produce the DDL and execute unless the dry run option was given
         backend.create_indexes(indexes, !options[:dry_run], options[:skip_existing],
-                                           options[:drop_existing]).each {|ddl| puts ddl}
+                               options[:drop_existing]).each {|ddl| puts ddl}
 
         # Create a new instance of the loader class and execute
         loader.load indexes, options[:loader], options[:progress],
@@ -184,37 +186,52 @@ module NoSE
         end
       end
 
+      # join the value of indexes
+      def inner_loop_join(index_values)
+        return index_values.to_a.flatten(1)[1] if index_values.length == 1
+
+        result = []
+        index_values.each_cons(2) do |former_index, next_index|
+          overlap_fields = former_index[0].all_fields & next_index[0].all_fields
+          former_index[1].each do |former_value|
+            next_index[1].each do |next_value|
+              next unless overlap_fields.all? { |overlap_field| former_value[overlap_field.id] == next_value[overlap_field.id]}
+              result << former_value.merge(next_value)
+            end
+          end
+        end
+        result
+      end
+
       # @param [MigratePlan, CassandraManager, Array]
       def prepare_next_indexes(migrate_plan, backend)
         puts "\e[36m migrate from: \e[0m"
-        migrate_plan.obsolete_plan.map{|step| puts '  ' + step.inspect}
+        migrate_plan.obsolete_plan&.map{|step| puts '  ' + step.inspect}
         puts "\e[36m to: \e[0m"
         migrate_plan.new_plan.map{|step| puts '  ' + step.inspect}
 
-        obsolete_data = {}
-        migrate_plan.obsolete_plan.steps.each do |obsolete_step|
-          obsolete_data.merge!(backend.get_all_data(obsolete_step.index))
-        end
-        obsolete_rows = []
-        (0...obsolete_data.to_a.first[1].size).each do |i|
-          tmp_hash = {}
-          obsolete_data.each do |k, v|
-            tmp_hash[k] = v[i]
-          end
-          obsolete_rows << tmp_hash
+        obsolete_data = nil
+        migrate_plan.new_plan.steps.each do |new_step|
+          next unless new_step.is_a? Plans::IndexLookupPlanStep
+          query_plan = migrate_plan.prepare_plans.find{|pp| pp.index == new_step.index}.query_plan
+
+          indexes = query_plan.select{|step| step.is_a? Plans::IndexLookupPlanStep}.map(&:index)
+          values = index_values(indexes, backend)
+          obsolete_data = inner_loop_join(values)
         end
 
-        migrate_plan.new_plan.steps.map{|step| step.index}.each do |new_index|
+        migrate_plan.new_plan.steps.select{|step| step.is_a? Plans::IndexLookupPlanStep}.map{|step| step.index}.each do |new_index|
           unless backend.index_exists?(new_index)
             puts backend.create_index(new_index, !options[:dry_run], options[:skip_existing])
-            backend.index_insert(new_index, obsolete_rows)
+            backend.index_insert(new_index, obsolete_data)
           end
         end
       end
 
       def drop_obsolete_tables(migrate_plan, backend, plans_for_timestep)
-        migrate_plan.obsolete_plan.steps.map{|step| step.index}.each do |index|
-          next if plans_for_timestep.any? {|plan| plan.steps.map{|step| step.index}.include? index}
+        return if migrate_plan.obsolete_plan.nil?
+        migrate_plan.obsolete_plan.steps.select{|step| step.is_a? Plans::IndexLookupPlanStep}.map{|step| step.index}.each do |index|
+          next if plans_for_timestep.any? {|plan| plan.steps.select{|step| step.is_a? Plans::IndexLookupPlanStep}.map{|step| step.index}.include? index}
 
           backend.drop_index(index)
         end
