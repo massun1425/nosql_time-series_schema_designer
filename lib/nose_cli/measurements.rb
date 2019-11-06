@@ -28,8 +28,8 @@ module NoSE
 
       # The mean weighted by this measurement weight
       # @return [Fixnum]
-      def weighted_mean
-        @weight * mean
+      def weighted_mean(timestep = nil)
+        (timestep.nil? ? @weight : @weight[timestep]) * mean
       end
     end
   end

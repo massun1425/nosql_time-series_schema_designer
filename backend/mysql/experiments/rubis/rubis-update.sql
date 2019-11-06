@@ -13,3 +13,4 @@ rename table buy_now to buynow;
 alter table buynow change column buyer_id buyer int(10) unsigned not null, algorithm=inplace;
 alter table buynow change column item_id item int(10) unsigned not null, algorithm=inplace;
 alter table users change column nickname nickname varchar(50) not null, algorithm=inplace;
+

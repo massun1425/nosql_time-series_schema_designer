@@ -1,0 +1,6 @@
+[submodule "NoSE"]
+	path = NoSE
+	url = git@github.com:Y-Wakuta/td_NoSE.git
+[submodule "td_NoSE"]
+	path = td_NoSE
+	url = git@github.com:Y-Wakuta/td_NoSE.git

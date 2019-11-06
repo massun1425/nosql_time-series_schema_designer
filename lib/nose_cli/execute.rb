@@ -170,6 +170,18 @@ module NoSE
         measurement
       end
 
+      def exec_query(backend, plan, index_values)
+        indexes = plan.select do |step|
+          step.is_a? Plans::IndexLookupPlanStep
+        end.map(&:index)
+
+        condition_list = execute_all_conditions plan.params, indexes, index_values
+        prepared = backend.prepare_query plan.query, plan.select_fields, plan.params,
+                                         [plan.steps]
+
+        condition_list.map { |conditions| prepared.execute conditions }.flatten(1)
+      end
+
       # Get the average execution time for a single update plan
       # @return [Measurements::Measurement]
       def bench_update(backend, indexes, plan, index_values,
@@ -235,6 +247,22 @@ module NoSE
             ]
           end]
         end
+      end
+
+      def execute_all_conditions(params, indexes, index_values)
+        indexes.map do |index|
+          index_values[index].map do |row|
+            Hash[params.map do |field_id, condition|
+              next if row.empty?
+              value = row[condition.field.id]
+              next if value.nil?
+              [
+                field_id,
+                Condition.new(condition.field, condition.operator, value)
+              ]
+            end]
+          end
+        end.flatten
       end
     end
   end

@@ -131,7 +131,7 @@ module NoSE
 
       # Get a sample of values from each index used by the queries
       # @return [Hash]
-      def index_values(indexes, backend, iterations, fail_on_empty = true)
+      def index_values(indexes, backend, iterations = nil, fail_on_empty = true)
         Hash[indexes.map do |index|
           values = backend.index_sample(index, iterations).to_a
           fail "Index #{index.key} is empty and will produce no results" \
