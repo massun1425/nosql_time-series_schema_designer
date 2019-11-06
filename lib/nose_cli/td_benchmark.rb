@@ -63,7 +63,18 @@ module NoSE
         (0...result.timesteps).each do |timestep|
           puts "\e[33m timestep: #{timestep} ===================================================== \e[0m"
 
-          indexes_for_this_timestep = result.time_depend_indexes.indexes_all_timestep[timestep].indexes
+          indexes_query = result.time_depend_plans
+                            .map{|tdp| tdp.plans[timestep]}
+                            .map(&:indexes)
+                            .flatten(1)
+          indexes_support_query = result.time_depend_update_plans
+                                    .map{|tdup| tdup.plans_all_timestep[timestep]
+                                                  .plans
+                                                  .map(&:query_plans)}
+                                    .flatten(2)
+                                    .map(&:indexes)
+                                    .flatten(1)
+          indexes_for_this_timestep = indexes_query + indexes_support_query
           index_values = index_values indexes_for_this_timestep, backend,
                                       options[:num_iterations],
                                       options[:fail_on_empty]
@@ -75,16 +86,12 @@ module NoSE
             weight = result.workload.statement_weights[query]
             next if query.is_a?(SupportQuery) || !weight
             @logger.debug { "Executing #{query.text}" }
-            puts "Executing Query: #{query.text}"
-            puts "    Executing Plan: #{plan.inspect}"
+            STDERR.puts "Executing Query: #{query.text}"
+            STDERR.puts "    Executing Plan: #{plan.inspect}"
 
             next unless options[:group].nil? || plan.group == options[:group]
 
-            indexes = plan.select do |step|
-              step.is_a? Plans::IndexLookupPlanStep
-            end.map(&:index)
-
-            measurement = bench_query backend, indexes, plan, index_values,
+            measurement = bench_query backend, plan.indexes, plan, index_values,
                                       options[:num_iterations], options[:repeat],
                                       weight: weight
             next if measurement.empty?
@@ -107,7 +114,7 @@ module NoSE
             next if plans.empty?
 
             @logger.debug { "Executing #{update.text}" }
-            puts "Executing #{update.text}"
+            STDERR.puts "Executing #{update.text}"
 
             plans.each do |plan|
               next unless options[:group].nil? || plan.group == options[:group]
@@ -135,7 +142,7 @@ module NoSE
             total_measurement << group_table.map{|gt| gt.weighted_mean(timestep)} \
                                .inject(0, &:+)
             group_table << total_measurement if options[:totals]
-            table << OpenStruct.new(label: label, group: group,
+            table << OpenStruct.new(timestep: timestep, label: label, group: group,
                                     measurements: group_table)
           end
 
@@ -144,15 +151,15 @@ module NoSE
             total_measurement << table.map do |group|
               group.measurements.find { |m| m.name == 'TOTAL' }.mean
             end.inject(0, &:+)
-            table << OpenStruct.new(label: label, group: 'TOTAL',
+            table << OpenStruct.new(timestep: timestep, label: label, group: 'TOTAL',
                                     measurements: [total_measurement])
           end
 
           case options[:format]
           when 'txt'
-            output_table table
+            td_output_table table
           else
-            output_csv table
+            td_output_csv table
           end
 
           break if timestep == result.timesteps - 1
@@ -205,24 +212,23 @@ module NoSE
 
       # @param [MigratePlan, CassandraManager, Array]
       def prepare_next_indexes(migrate_plan, backend)
-        puts "\e[36m migrate from: \e[0m"
-        migrate_plan.obsolete_plan&.map{|step| puts '  ' + step.inspect}
-        puts "\e[36m to: \e[0m"
-        migrate_plan.new_plan.map{|step| puts '  ' + step.inspect}
+        STDERR.puts "\e[36m migrate from: \e[0m"
+        migrate_plan.obsolete_plan&.map{|step| STDERR.puts '  ' + step.inspect}
+        STDERR.puts "\e[36m to: \e[0m"
+        migrate_plan.new_plan.map{|step| STDERR.puts '  ' + step.inspect}
 
         obsolete_data = nil
         migrate_plan.new_plan.steps.each do |new_step|
           next unless new_step.is_a? Plans::IndexLookupPlanStep
           query_plan = migrate_plan.prepare_plans.find{|pp| pp.index == new_step.index}.query_plan
 
-          indexes = query_plan.select{|step| step.is_a? Plans::IndexLookupPlanStep}.map(&:index)
-          values = index_values(indexes, backend)
+          values = index_values(query_plan.indexes, backend)
           obsolete_data = inner_loop_join(values)
         end
 
-        migrate_plan.new_plan.steps.select{|step| step.is_a? Plans::IndexLookupPlanStep}.map{|step| step.index}.each do |new_index|
+        migrate_plan.new_plan.indexes.each do |new_index|
           unless backend.index_exists?(new_index)
-            puts backend.create_index(new_index, !options[:dry_run], options[:skip_existing])
+            STDERR.puts backend.create_index(new_index, !options[:dry_run], options[:skip_existing])
             backend.index_insert(new_index, obsolete_data)
           end
         end
@@ -230,11 +236,49 @@ module NoSE
 
       def drop_obsolete_tables(migrate_plan, backend, plans_for_timestep)
         return if migrate_plan.obsolete_plan.nil?
-        migrate_plan.obsolete_plan.steps.select{|step| step.is_a? Plans::IndexLookupPlanStep}.map{|step| step.index}.each do |index|
-          next if plans_for_timestep.any? {|plan| plan.steps.select{|step| step.is_a? Plans::IndexLookupPlanStep}.map{|step| step.index}.include? index}
+        migrate_plan.obsolete_plan.indexes.each do |index|
+          next if plans_for_timestep.any? {|plan| plan.indexes.include? index}
 
           backend.drop_index(index)
         end
+      end
+
+      # Output the table of results
+      # @return [void]
+      def td_output_table(table)
+        columns = [
+          'timestep', 'label', 'group',
+          { 'measurements.name' => { display_name: 'name' } },
+          { 'measurements.weight' => { display_name: 'weight' } },
+          { 'measurements.mean' => { display_name: 'mean' } },
+          { 'measurements.estimate' => { display_name: 'cost' } }
+        ]
+
+        tp table, *columns
+      end
+
+      # Output a CSV file of results
+      # @return [void]
+      def td_output_csv(table)
+        csv_str = CSV.generate do |csv|
+          csv << %w(timestep label group name weight mean cost)
+
+          table.each do |group|
+            group.measurements.each do |measurement|
+              csv << [
+                group.timestep,
+                group.label,
+                group.group,
+                measurement.name,
+                measurement.weight,
+                measurement.mean,
+                measurement.estimate
+              ]
+            end
+          end
+        end
+
+        puts csv_str
       end
     end
   end
