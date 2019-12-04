@@ -63,7 +63,7 @@ module NoSE
         (0...result.timesteps).each do |timestep|
           STDERR.puts "\e[33m timestep: #{timestep} ===================================================== \e[0m"
           migration_worker, _ = exec_migration_async(plan_file, result, timestep)
-          #exec_migration(plan_file, result, timestep)
+          #exec_migration(result, timestep)
 
           indexes_for_this_timestep = result.indexes_used_in_plans(timestep)
           index_values = index_values indexes_for_this_timestep, backend,
@@ -154,7 +154,8 @@ module NoSE
           end
 
           migration_worker.stop
-          exec_cleanup(plan_file, result, timestep)
+          STDERR.puts "cleanup"
+          exec_cleanup(backend, result, timestep)
         end
       end
 
@@ -180,12 +181,11 @@ module NoSE
         end
       end
 
-      def exec_cleanup(plan_file, result, timestep)
+      def exec_cleanup(backend, result, timestep)
         migration_plans = result.migrate_plans.select{|mp| mp.start_time == timestep}
         plans_for_timestep = result.time_depend_plans.map{|tdp| tdp.plans[timestep + 1]}
 
         migration_plans.each do |migration_plan|
-          _, backend = load_time_depend_plans plan_file, options
           drop_obsolete_tables(migration_plan, backend, plans_for_timestep)
         end
       end
