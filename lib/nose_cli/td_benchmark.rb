@@ -74,7 +74,7 @@ module NoSE
 
           result.time_depend_plans.map{|tdp| tdp.plans[timestep]}.each do |plan|
             query = plan.query
-            weight = result.workload.statement_weights[query]
+            weight = result.workload.time_depend_statement_weights[query]
             next if query.is_a?(SupportQuery) || !weight
             @logger.debug { "Executing #{query.text}" }
             STDERR.puts "Executing Query: #{query.text}"
@@ -93,7 +93,7 @@ module NoSE
           end
 
           result.workload.updates.each do |update|
-            weight = result.workload.statement_weights[update]
+            weight = result.workload.time_depend_statement_weights[update]
             next unless weight
 
             update_plans = result.time_depend_update_plans
