@@ -543,6 +543,7 @@ require_relative 'nose_cli/recost'
 require_relative 'nose_cli/search'
 require_relative 'nose_cli/search_all'
 require_relative 'nose_cli/search_bench'
+require_relative 'nose_cli/search_pattern'
 require_relative 'nose_cli/texify'
 require_relative 'nose_cli/why'
 
