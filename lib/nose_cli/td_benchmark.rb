@@ -61,20 +61,11 @@ module NoSE
         set_up_db(result, backend, loader)
 
         (0...result.timesteps).each do |timestep|
-          puts "\e[33m timestep: #{timestep} ===================================================== \e[0m"
+          STDERR.puts "\e[33m timestep: #{timestep} ===================================================== \e[0m"
+          migration_worker, _ = exec_migration_async(plan_file, result, timestep)
+          #exec_migration(result, timestep)
 
-          indexes_query = result.time_depend_plans
-                            .map{|tdp| tdp.plans[timestep]}
-                            .map(&:indexes)
-                            .flatten(1)
-          indexes_support_query = result.time_depend_update_plans
-                                    .map{|tdup| tdup.plans_all_timestep[timestep]
-                                                  .plans
-                                                  .map(&:query_plans)}
-                                    .flatten(2)
-                                    .map(&:indexes)
-                                    .flatten(1)
-          indexes_for_this_timestep = indexes_query + indexes_support_query
+          indexes_for_this_timestep = result.indexes_used_in_plans(timestep)
           index_values = index_values indexes_for_this_timestep, backend,
                                       options[:num_iterations],
                                       options[:fail_on_empty]
@@ -83,7 +74,7 @@ module NoSE
 
           result.time_depend_plans.map{|tdp| tdp.plans[timestep]}.each do |plan|
             query = plan.query
-            weight = result.workload.statement_weights[query]
+            weight = result.workload.time_depend_statement_weights[query]
             next if query.is_a?(SupportQuery) || !weight
             @logger.debug { "Executing #{query.text}" }
             STDERR.puts "Executing Query: #{query.text}"
@@ -102,7 +93,7 @@ module NoSE
           end
 
           result.workload.updates.each do |update|
-            weight = result.workload.statement_weights[update]
+            weight = result.workload.time_depend_statement_weights[update]
             next unless weight
 
             update_plans = result.time_depend_update_plans
@@ -162,11 +153,9 @@ module NoSE
             td_output_csv table
           end
 
-          break if timestep == result.timesteps - 1
-          exec_migration(result, backend, timestep)
-
-
-          sleep(1)
+          migration_worker.stop
+          STDERR.puts "cleanup"
+          exec_cleanup(backend, result, timestep)
         end
       end
 
@@ -176,18 +165,26 @@ module NoSE
         indexes = result.time_depend_indexes.indexes_all_timestep.first.indexes
         # Produce the DDL and execute unless the dry run option was given
         backend.create_indexes(indexes, !options[:dry_run], options[:skip_existing],
-                               options[:drop_existing]).each {|ddl| puts ddl}
+                               options[:drop_existing]).each {|ddl| STDERR.puts ddl}
 
         # Create a new instance of the loader class and execute
         loader.load indexes, options[:loader], options[:progress],
                     options[:limit], options[:skip_nonempty]
       end
 
-      def exec_migration(result, backend, timestep)
+      def exec_migration(plan_file, result, timestep)
         migration_plans = result.migrate_plans.select{|mp| mp.start_time == timestep}
-        migration_plans.each {|mp| prepare_next_indexes(mp, backend) }
 
+        migration_plans.each do |migration_plan|
+          _, backend = load_time_depend_plans plan_file, options
+          prepare_next_indexes(migration_plan, backend)
+        end
+      end
+
+      def exec_cleanup(backend, result, timestep)
+        migration_plans = result.migrate_plans.select{|mp| mp.start_time == timestep}
         plans_for_timestep = result.time_depend_plans.map{|tdp| tdp.plans[timestep + 1]}
+
         migration_plans.each do |migration_plan|
           drop_obsolete_tables(migration_plan, backend, plans_for_timestep)
         end
@@ -210,26 +207,24 @@ module NoSE
         result
       end
 
-      # @param [MigratePlan, CassandraManager, Array]
+      # @param [MigratePlan, Backend]
       def prepare_next_indexes(migrate_plan, backend)
         STDERR.puts "\e[36m migrate from: \e[0m"
         migrate_plan.obsolete_plan&.map{|step| STDERR.puts '  ' + step.inspect}
         STDERR.puts "\e[36m to: \e[0m"
         migrate_plan.new_plan.map{|step| STDERR.puts '  ' + step.inspect}
 
-        obsolete_data = nil
         migrate_plan.new_plan.steps.each do |new_step|
           next unless new_step.is_a? Plans::IndexLookupPlanStep
-          query_plan = migrate_plan.prepare_plans.find{|pp| pp.index == new_step.index}.query_plan
+          query_plan = migrate_plan.prepare_plans.find{|pp| pp.index == new_step.index}&.query_plan
+          next if query_plan.nil?
 
           values = index_values(query_plan.indexes, backend)
           obsolete_data = inner_loop_join(values)
-        end
 
-        migrate_plan.new_plan.indexes.each do |new_index|
-          unless backend.index_exists?(new_index)
-            STDERR.puts backend.create_index(new_index, !options[:dry_run], options[:skip_existing])
-            backend.index_insert(new_index, obsolete_data)
+          unless backend.index_exists?(new_step.index)
+            STDERR.puts backend.create_index(new_step.index, !options[:dry_run], options[:skip_existing])
+            backend.index_insert(new_step.index, obsolete_data)
           end
         end
       end
@@ -239,8 +234,17 @@ module NoSE
         migrate_plan.obsolete_plan.indexes.each do |index|
           next if plans_for_timestep.any? {|plan| plan.indexes.include? index}
 
+          STDERR.puts "Dropping #{index.key}"
           backend.drop_index(index)
         end
+      end
+
+      def exec_migration_async(plan_file, result, timestep)
+        migration_worker = NoSE::Worker.new {|_| exec_migration(plan_file, result, timestep)}
+        [migration_worker].map(&:run).each(&:join)
+        thread = migration_worker.execute
+        thread.join
+        [migration_worker, thread]
       end
 
       # Output the table of results
