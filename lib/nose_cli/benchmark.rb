@@ -134,7 +134,7 @@ module NoSE
       def index_values(indexes, backend, iterations = nil, fail_on_empty = true)
         Hash[indexes.map do |index|
           values = backend.index_sample(index, iterations).to_a
-          fail "Index #{index.key} is empty and will produce no results" \
+          fail "Index #{index.key}: #{index.hash_str} is empty and will produce no results" \
             if values.empty? && fail_on_empty
 
           [index, values]

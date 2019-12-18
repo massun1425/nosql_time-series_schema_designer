@@ -113,6 +113,12 @@ module NoSE
               # Get all indexes used by support queries
               indexes = plan.query_plans.flat_map(&:indexes) << plan.index
 
+              # re-setting parameters for the update.
+              # index_values possible become obsolete because of the value on the CF can be changed by other update plans
+              index_values = index_values indexes, backend,
+                                          options[:num_iterations],
+                                          options[:fail_on_empty]
+
               measurement = bench_update backend, indexes, plan, index_values,
                                          options[:num_iterations],
                                          options[:repeat], weight: weight
