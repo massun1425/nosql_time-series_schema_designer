@@ -1,0 +1,40 @@
+# Connection to the backend database being targeted, currently only Cassandra
+backend:
+  name: cassandra
+  hosts:
+    - 127.0.0.1
+  port: 9042
+  keyspace: rubis
+
+# Cost model name and parameters
+cost_model:
+  name: cassandra
+
+  index_cost: 0.0078395645
+  partition_cost: 0.0013692786
+  row_cost: 1.17093638386496e-005
+  delete_cost: 0.0013287903
+  insert_cost: 0.013329108
+  creation_cost: 0.05
+
+# Loader-specific configuration
+# The mysql loader is recommended, but csv might work as well if
+# your generated indexes all have path length one
+loader:
+  name: mysql
+  host: 127.0.0.1
+
+  database: rubis
+  username: root
+  password: root
+
+# Query proxy
+proxy:
+  name: mysql
+  port: 3307
+
+# vim: set syntax=yaml:
+
+# Local Variables:
+# mode:yaml
+# End:

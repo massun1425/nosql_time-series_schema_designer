@@ -8,6 +8,7 @@
 /test/tmp/
 /test/version_tmp/
 /tmp/
+/vendor/
 
 ## Documentation cache and generated files:
 /.yardoc/
@@ -31,6 +32,7 @@
 
 ## Configuration files
 *.yml
+!nose.yml
 !.scrutinizer.yml
 !.travis.yml
 !.rubocop.yml
