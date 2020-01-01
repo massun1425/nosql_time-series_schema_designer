@@ -32,7 +32,8 @@ CREATE TABLE `bids` (
   `date` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=20000001 DEFAULT CHARSET=latin1;
+/*) ENGINE=InnoDB AUTO_INCREMENT=20000001 DEFAULT CHARSET=latin1;*/
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -65,7 +66,8 @@ CREATE TABLE `categories` (
   `name` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=latin1;
+/*) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=latin1;*/
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -152,7 +154,8 @@ CREATE TABLE `regions` (
   `name` varchar(25) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
+/*) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;*/
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
