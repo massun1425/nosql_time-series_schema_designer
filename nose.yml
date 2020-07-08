@@ -16,14 +16,16 @@ cost_model:
   delete_cost: 0.0013287903
   insert_cost: 0.013329108
 
-  # cost for updating under-preparing column families in migration process
-  #prepare_delete_cost: 0.000001
-  #prepare_insert_cost: 0.00001
-  prepare_delete_cost: 0
-  prepare_insert_cost: 0
+  # aggregation cost
+  count_cost:   0.00013329108
+  sum_cost:     0.00013329108
+  max_cost:     0.00013329108
+  avg_cost:     0.00013329108
+  groupby_cost: 0.00013329108
 
-  # cost for creating new column family in migration process
-  creation_cost: 0.05
+  # cost for updating under-preparing column families in migration process
+  prepare_delete_cost: 0.000001
+  prepare_insert_cost: 0.000001
 
 # Loader-specific configuration
 # The mysql loader is recommended, but csv might work as well if
