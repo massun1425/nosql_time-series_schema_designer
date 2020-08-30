@@ -29,10 +29,10 @@ module NoSE
              aliases: '-c',
              desc: 'creation cost coefficient of column family'
       option :objective, type: :string, default: 'cost',
-                         enum: %w(cost space indexes),
-                         desc: 'the objective function to use in the ILP'
+             enum: %w(cost space indexes),
+             desc: 'the objective function to use in the ILP'
       option :start_size, type: :numeric, default: 2,
-                            desc: 'size of queries in subset workloads as start point'
+             desc: 'size of queries in subset workloads as start point'
       option :end_size, type: :numeric, default: 20,
              desc: 'size of queries in subset workloads as end point'
       option :each_try, type: :numeric, default: 500,
@@ -49,7 +49,7 @@ module NoSE
         if options[:search_objective] == 'timestep'
           search_timesteps workload, cost_model
         elsif options[:search_objective] == 'subset'
-          search_subsets workload.statement_weights.keys.size, workload, cost_model
+          search_subsets workload, cost_model
         else
           search_simplified_query workload, cost_model
         end
@@ -57,105 +57,100 @@ module NoSE
 
       private
 
-      def search_subsets(size, workload, cost_model)
-        is_subset_found = false
-        puts "============ calculation size: #{size} ======================================================================="
-        statement_key_sets = (0...options[:each_try]).map do |_|
-          workload.statement_weights.keys.sample(size).to_set
-        end.uniq
+      def search_subsets(workload, cost_model)
+        (@options[:start_size]..@options[:end_size]).each do |size|
 
-        #statement_key_sets = statement_key_sets.select{|sks| sks.any?{|s| s.comment == " -- Q2_outer"}}
+          puts "============ calculation size: #{size} ======================================================================="
+          statement_key_sets = (0...options[:each_try]).map do |_|
+            workload.statement_weights.keys.sample(size).to_set
+          end.uniq
 
-        puts "------------ statement_case_size: #{statement_key_sets.size} ----------------"
+          puts "------------ statement_case_size: #{statement_key_sets.size} ----------------"
 
-        #Parallel.each(statement_key_sets, in_processes: [2, 2].max()) do |statement_keys|
-        statement_key_sets.each do |statement_keys|
-          if is_subset_found
-            puts "subset is already found in other cases. exit.."
-            return
-          end
+          #Parallel.each(statement_key_sets, in_processes: [Etc.nprocessors - 2, 2].max()) do |statement_keys|
+          statement_key_sets.each do |statement_keys|
 
-          queries = workload.statement_weights.select{|k, _| statement_keys.include? k}.keys
-          if workload.is_a? TimeDependWorkload
-            sub_workload = TimeDependWorkload.new {|_| Model 'tpch'}
-            sub_workload.time_depend_statement_weights = queries
-          else
-            sub_workload = Workload.new {|_| Model 'tpch'}
-            queries.each {|query| sub_workload.add_statement query}
-          end
+            queries = workload.statement_weights.select{|k, _| statement_keys.include? k}.keys
+            next unless queries.any? {|q| q.comment == " -- Q5"}
 
-          # Execute the advisor
-          objective = Search::Objective.const_get options[:objective].upcase
-          begin
-            search_result sub_workload, cost_model, options[:max_space],
-                          objective, false
-          rescue Exception => e
-            puts "\n\n= subset queries ============================================================================================================="
-            puts "statement size: #{size}"
-            puts "exception: #{e.inspect}"
-            puts "exception: #{e.backtrace.join("\n")}"
-            puts sub_workload.statement_weights.keys.map(&:text).join("\n")
-            puts "==============================================================================================================\n\n"
-            if is_subset_found
-              puts "subset is already found in other cases. exit.."
-              raise Parallel::Kill
+            if workload.is_a? TimeDependWorkload
+              sub_workload = TimeDependWorkload.new do |_|
+                Model 'tpch'
+                TimeSteps 3
+              end
+              #sub_workload.time_depend_statement_weights = queries
+              queries.each {|query| sub_workload.add_statement query, frequency: [1,2,3]}
+            else
+              sub_workload = Workload.new {|_| Model 'tpch'}
+              queries.each {|query| sub_workload.add_statement query}
             end
-            is_subset_found = true
 
-            search_subsets(size - 1, sub_workload, cost_model)
-            return
+            # Execute the advisor
+            objective = Search::Objective.const_get options[:objective].upcase
+            begin
+              search_result sub_workload, cost_model, options[:max_space],
+                            objective, false
+            rescue Exception => e
+              puts "\n\n= subset queries ============================================================================================================="
+              puts "statement size: #{size}"
+              puts "exception: #{e.inspect}"
+              puts "exception: #{e.backtrace.join("\n")}"
+              puts sub_workload.statement_weights.inspect
+              #puts sub_workload.statement_weights.map(&:text).join("\n")
+              puts "==============================================================================================================\n\n"
+            end
           end
         end
       end
 
       #    def search_subsets(start_size, end_size, workload, cost_model)
-  #      is_subset_found = false
-  #      (start_size..[end_size, workload.statement_weights.keys.size].min).to_a.reverse.each do |size|
-  #        puts "============ calculation size: #{size} ======================================================================="
-  #        statement_key_sets = (0...options[:each_try]).map do |_|
-  #          workload.statement_weights.keys.sample(size).to_set
-  #        end.uniq
+      #      is_subset_found = false
+      #      (start_size..[end_size, workload.statement_weights.keys.size].min).to_a.reverse.each do |size|
+      #        puts "============ calculation size: #{size} ======================================================================="
+      #        statement_key_sets = (0...options[:each_try]).map do |_|
+      #          workload.statement_weights.keys.sample(size).to_set
+      #        end.uniq
 
-  #        statement_key_sets = statement_key_sets.select{|sks| sks.any?{|s| s.comment == " -- Q2_outer"}}
+      #        statement_key_sets = statement_key_sets.select{|sks| sks.any?{|s| s.comment == " -- Q2_outer"}}
 
-  #        puts "------------ statement_case_size: #{statement_key_sets.size} ----------------"
+      #        puts "------------ statement_case_size: #{statement_key_sets.size} ----------------"
 
-  #        Parallel.each(statement_key_sets, in_processes: [Etc.nprocessors / 2, 2].max()) do |statement_keys|
-  #          if is_subset_found
-  #            puts "subset is already found in other cases. exit.."
-  #            return
-  #          end
+      #        Parallel.each(statement_key_sets, in_processes: [Etc.nprocessors / 2, 2].max()) do |statement_keys|
+      #          if is_subset_found
+      #            puts "subset is already found in other cases. exit.."
+      #            return
+      #          end
 
-  #          queries = workload.statement_weights.select{|k, _| statement_keys.include? k}.keys
-  #          if workload.is_a? TimeDependWorkload
-  #            sub_workload = TimeDependWorkload.new {|_| Model 'tpch'}
-  #            sub_workload.time_depend_statement_weights = queries
-  #          else
-  #            sub_workload = Workload.new {|_| Model 'tpch'}
-  #            queries.each {|query| sub_workload.add_statement query}
-  #          end
+      #          queries = workload.statement_weights.select{|k, _| statement_keys.include? k}.keys
+      #          if workload.is_a? TimeDependWorkload
+      #            sub_workload = TimeDependWorkload.new {|_| Model 'tpch'}
+      #            sub_workload.time_depend_statement_weights = queries
+      #          else
+      #            sub_workload = Workload.new {|_| Model 'tpch'}
+      #            queries.each {|query| sub_workload.add_statement query}
+      #          end
 
-  #          # Execute the advisor
-  #          objective = Search::Objective.const_get options[:objective].upcase
-  #          begin
-  #            search_result sub_workload, cost_model, options[:max_space],
-  #                          objective, false
-  #          rescue Exception => e
-  #            puts "\n\n= subset queries ============================================================================================================="
-  #            puts "statement size: #{size}"
-  #            puts "exception: #{e.inspect}"
-  #            puts "exception: #{e.backtrace.join("\n")}"
-  #            puts sub_workload.statement_weights.keys.map(&:text).join("\n")
-  #            puts "==============================================================================================================\n\n"
-  #            return if is_subset_found
-  #            is_subset_found = true
+      #          # Execute the advisor
+      #          objective = Search::Objective.const_get options[:objective].upcase
+      #          begin
+      #            search_result sub_workload, cost_model, options[:max_space],
+      #                          objective, false
+      #          rescue Exception => e
+      #            puts "\n\n= subset queries ============================================================================================================="
+      #            puts "statement size: #{size}"
+      #            puts "exception: #{e.inspect}"
+      #            puts "exception: #{e.backtrace.join("\n")}"
+      #            puts sub_workload.statement_weights.keys.map(&:text).join("\n")
+      #            puts "==============================================================================================================\n\n"
+      #            return if is_subset_found
+      #            is_subset_found = true
 
-  #            search_subsets(start_size, end_size, sub_workload, cost_model)
-  #            return
-  #          end
-  #        end
-  #      end
-  #    end
+      #            search_subsets(start_size, end_size, sub_workload, cost_model)
+      #            return
+      #          end
+      #        end
+      #      end
+      #    end
 
       def search_simplified_query(workload, cost_model)
         simplified_queries = workload.statement_weights.keys.map{|q| q.simplified_queries}.reject(&:empty?)
@@ -164,8 +159,8 @@ module NoSE
           query_sets = query_sets.product(sqs).take(options[:each_try])
           query_sets.map!{|q| q.flatten!} if query_sets.first.first.is_a? Array
         end
-        #Parallel.each(query_sets, in_processes: Etc.nprocessors - 5) do |queries|
-        query_sets.each do |queries|
+        Parallel.each(query_sets, in_processes: Etc.nprocessors - 5) do |queries|
+          #query_sets.each do |queries|
           if workload.is_a? TimeDependWorkload
             sub_workload = TimeDependWorkload.new {|_| Model 'tpch'}
           else
