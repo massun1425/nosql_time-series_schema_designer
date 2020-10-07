@@ -1,1 +1,1 @@
-cqlsh -e "CREATE KEYSPACE rubis WITH REPLICATION = {'class':'SimpleStrategy','replication_factor':1};"
+cqlsh -e "CREATE KEYSPACE tpch WITH REPLICATION = {'class':'SimpleStrategy','replication_factor':1};"
