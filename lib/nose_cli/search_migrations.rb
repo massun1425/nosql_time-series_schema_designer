@@ -21,19 +21,19 @@ module NoSE
       shared_option :output
 
       option :max_space, type: :numeric, default: Float::INFINITY,
-                         aliases: '-s',
-                         desc: 'maximum space allocated to indexes'
+             aliases: '-s',
+             desc: 'maximum space allocated to indexes'
       option :enumerated, type: :boolean, default: false, aliases: '-e',
-                          desc: 'whether enumerated indexes should be output'
+             desc: 'whether enumerated indexes should be output'
       option :read_only, type: :boolean, default: false,
-                         desc: 'whether to ignore update statements'
+             desc: 'whether to ignore update statements'
       option :objective, type: :string, default: 'cost',
-                         enum: %w(cost space indexes),
-                         desc: 'the objective function to use in the ILP'
+             enum: %w(cost space indexes),
+             desc: 'the objective function to use in the ILP'
       option :by_id_graph, type: :boolean, default: false,
-                           desc: 'whether to group generated indexes in' \
+             desc: 'whether to group generated indexes in' \
                                  'graphs by ID',
-                           aliases: '-i'
+             aliases: '-i'
 
       def search_migrations(name)
         # Get the workload from file or name
@@ -44,6 +44,9 @@ module NoSE
           workload = Workload.load name
         end
 
+        ENV['TZ'] = 'Asia/Tokyo'
+        started_time = Time.now.to_s.gsub(" ", "_")
+
         # Prepare the workload and the cost model
         workload.mix = options[:mix].to_sym \
           unless options[:mix] == 'default' && workload.mix != :default
@@ -53,46 +56,51 @@ module NoSE
         # Execute the advisor
         objective = Search::Objective.const_get options[:objective].upcase
 
+        dir_name = "search_migration_result/" + + "#{name}_#{started_time}".gsub("/", "_").gsub(" ", "")
+        FileUtils.mkdir_p(dir_name)
+        File.open("#{dir_name}/workload.rb", "w") do |f|
+          f.puts workload.source_code
+        end
 
-        @creation_coeff = 0.000_000_001 # Hyper Parameter
-        @migrate_support_coeff = 0.000_000_1 # Hyper Parameter
-        [0.000_000_000_1, 0.000_000_001, 0.000_000_01].each do |creation_coe|
-          [0.000_000_01, 0.000_000_1, 0.000_001].each do |migrate_sup_coe|
-            [100, 3000].each do |interval|
-              workload.creation_coeff = creation_coe
-              workload.migrate_support_coeff = migrate_sup_coe
-              workload.interval = interval
+        enumerated_indexes = enumerate_indexes(workload, cost_model)
 
-              result = search_result workload, cost_model, options[:max_space],
-                                     objective, options[:by_id_graph]
-              #if result.migrate_plans.size >= 3
-                puts "======================================================================================="
-                puts creation_coe, migrate_sup_coe, interval, result.migrate_plans.size
-                puts "======================================================================================="
-              #end
+        search = Search::CachedSearch.new(workload, cost_model, objective, options[:by_id_graph], options[:prunedCF])
+        enumerated_indexes = search.pruning_indexes_by_plan_cost enumerated_indexes
+        query_trees = search.get_query_trees_hash enumerated_indexes
+        support_query_trees = search.get_support_query_trees_hash query_trees, enumerated_indexes
+
+        creation_coefs = [1.0e-06, 1.0e-09]
+        migrate_sup_coefs = [1.0e-15, 1.0e-20, 1.0e-25]
+        intervals = [3000, 7000]
+        index_creation_time_coefs = [1.0e-06, 1.0e-09, 1.0e-12] # yusuke これと creation_coef は１つに統合できるのでは?
+
+        parameter_combinations = creation_coefs.product(migrate_sup_coefs, intervals, index_creation_time_coefs)
+        #Parallel.each(parameter_combinations.reverse, in_processes: Etc.nprocessors / 2) do |(creation_coe, migrate_sup_coe, interval, index_creation_time_coe)|
+        parameter_combinations.reverse.each do |(creation_coe, migrate_sup_coe, interval, index_creation_time_coe)|
+          puts "======================================================================================="
+          puts creation_coe, migrate_sup_coe, interval, index_creation_time_coe
+          puts "======================================================================================="
+
+          workload.creation_coeff = creation_coe
+          workload.migrate_support_coeff = migrate_sup_coe
+          workload.reset_interval interval
+          ENV['INDEX_CREATION_TIME_COEFF'] = index_creation_time_coe.to_s
+
+          result = search.search_overlap enumerated_indexes, query_trees, support_query_trees
+
+          if result.migrate_plans.size >= 1
+            File.open(dir_name + "/" + [creation_coe, migrate_sup_coe, interval, index_creation_time_coe, result.migrate_plans.size].join("-").gsub(".", "_") + ".txt", "w") do |f|
+              f.puts "======================================================================================="
+              f.puts "creation_coe, migrate_sup_coe, interval, index_creation_time_coeff, migration plan num"
+              f.puts creation_coe, migrate_sup_coe, interval, index_creation_time_coe, result.migrate_plans.size.to_s
+              output_migration_plans_txt result.migrate_plans, f, 1
+              f.puts "======================================================================================="
+            end
+            File.open(dir_name + "/" + "mig_plan_size_" + [creation_coe, migrate_sup_coe, interval, index_creation_time_coe, result.migrate_plans.size].join("-").gsub(".", "_") + "_whole_result_" + ".txt", "w") do |f|
+              output_json result, f
+              output_txt result, f
             end
           end
-        end
-      end
-
-      private
-
-      # Output results from the search procedure
-      # @return [void]
-      def output_search_result(result, options)
-        # Output the results in the specified format
-        file = if options[:output].nil?
-                 $stdout
-               else
-                 File.open(options[:output], 'w')
-               end
-
-        begin
-          backend = get_backend options, result
-          send(('output_' + options[:format]).to_sym,
-               result, file, options[:enumerated], backend)
-        ensure
-          file.close unless options[:output].nil?
         end
       end
     end
