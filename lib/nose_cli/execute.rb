@@ -19,20 +19,20 @@ module NoSE
       shared_option :mix
 
       option :num_iterations, type: :numeric, default: 100,
-                              banner: 'the number of times to execute each ' \
+             banner: 'the number of times to execute each ' \
                                       'statement'
       option :repeat, type: :numeric, default: 1,
-                      banner: 'how many times to repeat the benchmark'
+             banner: 'how many times to repeat the benchmark'
       option :group, type: :string, default: nil, aliases: '-g',
-                     banner: 'restrict the benchmark to statements in the ' \
+             banner: 'restrict the benchmark to statements in the ' \
                              'given group'
       option :fail_on_empty, type: :boolean, default: true,
-                             banner: 'abort if a column family is empty'
+             banner: 'abort if a column family is empty'
       option :totals, type: :boolean, default: false, aliases: '-t',
-                      banner: 'whether to include group totals in the output'
+             banner: 'whether to include group totals in the output'
       option :format, type: :string, default: 'txt',
-                      enum: %w(txt csv), aliases: '-f',
-                      banner: 'the format of the output data'
+             enum: %w(txt csv), aliases: '-f',
+             banner: 'the format of the output data'
 
       def execute(plans_name)
         # Load the execution plans
@@ -113,11 +113,11 @@ module NoSE
       # @return [void]
       def output_table(table)
         columns = [
-          'label', 'group',
-          { 'measurements.name' => { display_name: 'name' } },
-          { 'measurements.weight' => { display_name: 'weight' } },
-          { 'measurements.mean' => { display_name: 'mean' } },
-          { 'measurements.estimate' => { display_name: 'cost' } }
+            'label', 'group',
+            { 'measurements.name' => { display_name: 'name' } },
+            { 'measurements.weight' => { display_name: 'weight' } },
+            { 'measurements.mean' => { display_name: 'mean' } },
+            { 'measurements.estimate' => { display_name: 'cost' } }
         ]
 
         tp table, *columns
@@ -132,12 +132,12 @@ module NoSE
           table.each do |group|
             group.measurements.each do |measurement|
               csv << [
-                group.label,
-                group.group,
-                measurement.name,
-                measurement.weight,
-                measurement.mean,
-                measurement.estimate
+                  group.label,
+                  group.group,
+                  measurement.name,
+                  measurement.weight,
+                  measurement.mean,
+                  measurement.estimate
               ]
             end
           end
@@ -158,14 +158,26 @@ module NoSE
 
         measurement = Measurements::Measurement.new plan, weight: weight
 
+        retry_times = 10
+        current_times = 0
         1.upto(repeat) do
-          # Execute each plan and measure the time
-          start_time = Time.now.utc
-          condition_list.each { |conditions| prepared.execute conditions }
-          elapsed = Time.now.utc - start_time
+          begin
+            # Execute each plan and measure the time
+            start_time = Time.now.utc
+            executed_results = condition_list.each { |conditions| prepared.execute conditions }
+            elapsed = Time.now.utc - start_time
 
-          measurement << (elapsed / iterations)
+            measurement << (elapsed / iterations)
+            GC.start
+          rescue ThreadError
+            current_times += 1
+            STDERR.puts "ThreadError raised. Sleep before next retry"
+            sleep(20)
+            retry if current_times < retry_times
+            raise
+          end
         end
+        #puts executed_results.inspect
 
         measurement
       end
@@ -185,7 +197,7 @@ module NoSE
       # Get the average execution time for a single update plan
       # @return [Measurements::Measurement]
       def bench_update(backend, indexes, plan, index_values,
-                       iterations, repeat, weight: 1.0)
+                       iterations, repeat, weight: 1.0, nullable_indexes: nil)
         condition_list = execute_conditions plan.params, indexes, index_values,
                                             iterations
 
@@ -198,7 +210,8 @@ module NoSE
             # First check for IDs given as part of the query otherwise
             # get the backend to generate a random ID or take a random value
             condition = condition_list[i - 1][field.id]
-            value = if !condition.nil? && field.is_a?(Fields::IDField)
+
+            value = if !condition.nil?
                       condition.value
                     elsif field.is_a?(Fields::IDField)
                       backend.generate_id
@@ -223,6 +236,7 @@ module NoSE
           elapsed = Time.now.utc - start_time
 
           measurement << (elapsed / iterations)
+          GC.start
         end
 
         measurement
@@ -242,8 +256,8 @@ module NoSE
             end
 
             [
-              field_id,
-              Condition.new(condition.field, condition.operator, value)
+                field_id,
+                Condition.new(condition.field, condition.operator, value)
             ]
           end]
         end
@@ -257,8 +271,8 @@ module NoSE
               value = row[condition.field.id]
               next if value.nil?
               [
-                field_id,
-                Condition.new(condition.field, condition.operator, value)
+                  field_id,
+                  Condition.new(condition.field, condition.operator, value)
               ]
             end]
           end

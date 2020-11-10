@@ -21,12 +21,21 @@ module NoSE
 
       class_option :debug, type: :boolean, aliases: '-d',
                    desc: 'enable detailed debugging information'
-      class_option :parallel, type: :boolean, default: false,
+      class_option :parallel, type: :boolean, default: true,
                    desc: 'run various operations in parallel'
       class_option :colour, type: :boolean, default: nil, aliases: '-c',
                    desc: 'enabled coloured output'
       class_option :interactive, type: :boolean, default: true,
                    desc: 'allow actions which require user input'
+      class_option :prunedCF, type: :boolean, default: true,
+                 desc: 'whether enumerate CFs using pruned index enumerator or not'
+      class_option :enumerator, type: :string, default: 'pruned',
+                   enum: %w(default pruned simple),
+                   desc: 'the objective function to use in the ILP'
+      class_option :iterative, type: :boolean, default: true,
+                   desc: 'whether execute optimization in iterative method'
+      class_option :is_shared_field_threshold, type: :numeric, default: 2,
+                   desc: 'query num threshold for decide whether the field is shared among queries'
 
       def initialize(_options, local_options, config)
         super
@@ -259,17 +268,18 @@ module NoSE
       def output_migration_plans_txt(plans, file, indent)
         header = "Migrate plans\n" + '━' * 50
         file.puts Formatador.parse("[blue]#{header}[/]")
-        plans.sort_by{|mp| [mp.query.text, mp.start_time]}.each do |migrate_plan|
-          file.puts '  ' * (indent - 1) + migrate_plan.query.label \
-            unless migrate_plan.query.nil? || migrate_plan.query.label.nil?
+        #plans.sort_by{|mp| [mp.start_time, (mp.query.is_a?(Query) ? mp.query.text : mp.query)]}.each do |migrate_plan|
+        plans.sort_by{|mp| [mp.start_time, mp.query.text]}.each do |migrate_plan|
+          file.puts '  ' * (indent - 1) + (migrate_plan.query.is_a?(Query) ? migrate_plan.query.label : migrate_plan.query.text) \
+            unless migrate_plan.query.nil? || (migrate_plan.query.is_a?(Query) ? migrate_plan.query.label.nil? : migrate_plan.query.nil?)
           file.puts '  ' * (indent - 1) + migrate_plan.query.inspect
           file.puts Formatador.parse('  ' * indent + "[blue]timestep: #{migrate_plan.start_time} to #{migrate_plan.end_time}[/]")
-          file.puts Formatador.parse('  ' * indent + "[blue]obsolete plan: [/]")
+          file.puts Formatador.parse('  ' * indent + "[blue]obsolete plan, cost: #{migrate_plan.obsolete_plan&.cost} [/]")
           migrate_plan.obsolete_plan&.each { |step| file.puts '  ' * (indent + 1) + step.inspect }
-          file.puts Formatador.parse('  ' * indent + "[blue]new plan: [/]")
+          file.puts Formatador.parse('  ' * indent + "[blue]new plan, cost #{migrate_plan.new_plan.cost} [/]")
           migrate_plan.new_plan&.each { |step| file.puts '  ' * (indent + 1) + step.inspect }
           migrate_plan.prepare_plans.each do |prepare_plan|
-            file.puts Formatador.parse('  ' * indent + "[blue]prepare plan: for #{prepare_plan.index.inspect}[/]")
+            file.puts Formatador.parse('  ' * indent + "[blue]prepare plan, cost: #{prepare_plan.query_plan.cost}: for #{prepare_plan.index.inspect}[/]")
             prepare_plan.query_plan.each { |step| file.puts '  ' * (indent + 1) + step.inspect }
           end
           file.puts
@@ -296,6 +306,7 @@ module NoSE
       # Output update plans as text
       # @return [void]
       def time_depend_output_update_plans_txt(update_plans, file, weights, mix = nil)
+        return if update_plans.nil?
         unless update_plans.all?{ |update_plan| update_plan.empty?}
           header = "Update plans\n" + '━' * 50
           file.puts Formatador.parse("[blue]#{header}[/]")

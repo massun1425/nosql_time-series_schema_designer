@@ -3,6 +3,7 @@
 require 'formatador'
 require 'ostruct'
 require 'json'
+require 'stackprof'
 
 module NoSE
   module CLI
@@ -23,9 +24,6 @@ module NoSE
       option :max_space, type: :numeric, default: Float::INFINITY,
                          aliases: '-s',
                          desc: 'maximum space allocated to indexes'
-      option :creation_cost, type: :numeric, default: 0.00001,
-             aliases: '-c',
-             desc: 'creation cost coefficient of column family'
       option :enumerated, type: :boolean, default: false, aliases: '-e',
                           desc: 'whether enumerated indexes should be output'
       option :read_only, type: :boolean, default: false,
@@ -55,8 +53,13 @@ module NoSE
 
         # Execute the advisor
         objective = Search::Objective.const_get options[:objective].upcase
-        result = search_result workload, cost_model, options[:max_space],
-                               objective, options[:by_id_graph]
+        stating = Time.new
+        StackProf.run(mode: :wall, raw: true, out: 'tmp/search_rubis.dump') do
+          result = search_result workload, cost_model, options[:max_space],
+                                 objective, options[:by_id_graph]
+        end
+        ending = Time.new
+        puts "whole execution time: #{ending - stating}"
         output_search_result result, options unless result.nil?
       end
 

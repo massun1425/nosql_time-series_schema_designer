@@ -31,7 +31,7 @@ module NoSE
       option :objective, type: :string, default: 'cost',
              enum: %w(cost space indexes),
              desc: 'the objective function to use in the ILP'
-      option :start_size, type: :numeric, default: 2,
+      option :start_size, type: :numeric, default: 3,
              desc: 'size of queries in subset workloads as start point'
       option :end_size, type: :numeric, default: 20,
              desc: 'size of queries in subset workloads as end point'
@@ -62,16 +62,19 @@ module NoSE
 
           puts "============ calculation size: #{size} ======================================================================="
           statement_key_sets = (0...options[:each_try]).map do |_|
-            workload.statement_weights.keys.sample(size).to_set
+            workload.statement_weights.keys.reject{|q| q.is_a? Insert}.sample(size).to_set
           end.uniq
 
           puts "------------ statement_case_size: #{statement_key_sets.size} ----------------"
 
-          #Parallel.each(statement_key_sets, in_processes: [Etc.nprocessors - 2, 2].max()) do |statement_keys|
-          statement_key_sets.each do |statement_keys|
+          Parallel.each(statement_key_sets, in_processes: [Etc.nprocessors - 2, 2].max()) do |statement_keys|
+            #statement_key_sets.each do |statement_keys|
 
             queries = workload.statement_weights.select{|k, _| statement_keys.include? k}.keys
-            next unless queries.any? {|q| q.comment == " -- Q5"}
+            #next unless queries.any? {|q| q.comment == " -- Q5"}
+            next unless queries.map{|q| q.comment}.to_set >= [" -- Q5", " -- Q2_outer", " -- Q2_inner"].to_set
+
+            puts "$$$$$$$$ #{queries.map{|q| q.comment}.join(', ')}"
 
             if workload.is_a? TimeDependWorkload
               sub_workload = TimeDependWorkload.new do |_|
@@ -82,7 +85,10 @@ module NoSE
               queries.each {|query| sub_workload.add_statement query, frequency: [1,2,3]}
             else
               sub_workload = Workload.new {|_| Model 'tpch'}
-              queries.each {|query| sub_workload.add_statement query}
+              queries.each {|query| sub_workload.add_statement query.dup}
+              workload.statement_weights.keys.select{|q| q.is_a? Insert}.each do |update|
+                sub_workload.add_statement update.dup
+              end
             end
 
             # Execute the advisor
@@ -90,7 +96,7 @@ module NoSE
             begin
               search_result sub_workload, cost_model, options[:max_space],
                             objective, false
-            rescue Exception => e
+            rescue InvalidIndexException => e
               puts "\n\n= subset queries ============================================================================================================="
               puts "statement size: #{size}"
               puts "exception: #{e.inspect}"
