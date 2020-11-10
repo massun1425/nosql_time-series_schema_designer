@@ -62,8 +62,22 @@ module NoSE
 
         (0...result.timesteps).each do |timestep|
           STDERR.puts "\e[33m timestep: #{timestep} ===================================================== \e[0m"
+
+          # this works only for localhost
+          #puts `docker exec cassandra_migrate nodetool flush`
+
+          if timestep < result.timesteps - 1
+            under_creating_indexes = result.time_depend_indexes.indexes_all_timestep[timestep + 1].indexes.to_set -
+                result.time_depend_indexes.indexes_all_timestep[timestep].indexes.to_set
+
+            under_creating_indexes.each do |under_creating_index|
+              backend.create_index(under_creating_index, !options[:dry_run], true)
+              STDERR.puts under_creating_index.key + " is created before query processing"
+            end
+          end
+
           migration_worker, _ = exec_migration_async(plan_file, result, timestep)
-          #exec_migration(result, timestep)
+          #exec_migration(plan_file, result, timestep)
 
           indexes_for_this_timestep = result.indexes_used_in_plans(timestep)
           index_values = index_values indexes_for_this_timestep, backend,
@@ -82,9 +96,12 @@ module NoSE
 
             next unless options[:group].nil? || plan.group == options[:group]
 
-            measurement = bench_query backend, plan.indexes, plan, index_values,
-                                      options[:num_iterations], options[:repeat],
-                                      weight: weight
+            measurement = nil
+            #StackProf.run(mode: :wall, raw: true, out: "tmp/bench_query_#{timestep}.dump") do
+              measurement = bench_query backend, plan.indexes, plan, index_values,
+                                        options[:num_iterations], options[:repeat],
+                                        weight: weight
+            #end
             next if measurement.empty?
 
             measurement.estimate = plan.cost
@@ -117,12 +134,16 @@ module NoSE
               # index_values possible become obsolete because of the value on the CF can be changed by other update plans
               index_values = index_values indexes, backend,
                                           options[:num_iterations],
-                                          options[:fail_on_empty]
+                                          options[:fail_on_empty],
+                                          nullable_indexes: under_creating_indexes
 
               measurement = bench_update backend, indexes, plan, index_values,
                                          options[:num_iterations],
                                          options[:repeat], weight: weight
-              next if measurement.empty?
+              if measurement.empty?
+                puts "measurement was empty"
+                next
+              end
 
               measurement.estimate = plan.cost
               group_totals[plan.group] += measurement.mean
@@ -173,15 +194,18 @@ module NoSE
         backend.create_indexes(indexes, !options[:dry_run], options[:skip_existing],
                                options[:drop_existing]).each {|ddl| STDERR.puts ddl}
 
+        load_started = Time.now.utc
         # Create a new instance of the loader class and execute
         loader.load indexes, options[:loader], options[:progress],
                     options[:limit], options[:skip_nonempty]
+        load_ended = Time.now.utc
+        STDERR.puts "whole loading time: " + (load_ended - load_started).to_s
       end
 
       def exec_migration(plan_file, result, timestep)
         migration_plans = result.migrate_plans.select{|mp| mp.start_time == timestep}
 
-        migration_plans.each do |migration_plan|
+        Parallel.each(migration_plans, in_threads: 10) do |migration_plan|
           _, backend = load_time_depend_plans plan_file, options
           prepare_next_indexes(migration_plan, backend)
         end
@@ -228,10 +252,13 @@ module NoSE
           values = index_values(query_plan.indexes, backend)
           obsolete_data = inner_loop_join(values)
 
+          STDERR.puts "===== creating index: #{new_step.index.key} for the migration"
           unless backend.index_exists?(new_step.index)
             STDERR.puts backend.create_index(new_step.index, !options[:dry_run], options[:skip_existing])
-            backend.index_insert(new_step.index, obsolete_data)
           end
+          STDERR.puts "collected data size for #{new_step.index.key} is #{obsolete_data.size}"
+          backend.load_index_by_COPY(new_step.index, obsolete_data)
+          STDERR.puts "===== creation done: #{new_step.index.key} for the migration"
         end
       end
 
@@ -240,7 +267,6 @@ module NoSE
         migrate_plan.obsolete_plan.indexes.each do |index|
           next if plans_for_timestep.any? {|plan| plan.indexes.include? index}
 
-          STDERR.puts "Dropping #{index.key}"
           backend.drop_index(index)
         end
       end
@@ -257,11 +283,11 @@ module NoSE
       # @return [void]
       def td_output_table(table)
         columns = [
-          'timestep', 'label', 'group',
-          { 'measurements.name' => { display_name: 'name' } },
-          { 'measurements.weight' => { display_name: 'weight' } },
-          { 'measurements.mean' => { display_name: 'mean' } },
-          { 'measurements.estimate' => { display_name: 'cost' } }
+            'timestep', 'label', 'group',
+            { 'measurements.name' => { display_name: 'name' } },
+            { 'measurements.weight' => { display_name: 'weight' } },
+            { 'measurements.mean' => { display_name: 'mean' } },
+            { 'measurements.estimate' => { display_name: 'cost' } }
         ]
 
         tp table, *columns
@@ -276,13 +302,13 @@ module NoSE
           table.each do |group|
             group.measurements.each do |measurement|
               csv << [
-                group.timestep,
-                group.label,
-                group.group,
-                measurement.name,
-                measurement.weight,
-                measurement.mean,
-                measurement.estimate
+                  group.timestep,
+                  group.label,
+                  group.group,
+                  measurement.name,
+                  measurement.weight,
+                  measurement.mean,
+                  measurement.estimate
               ]
             end
           end
