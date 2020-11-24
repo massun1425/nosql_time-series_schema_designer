@@ -78,7 +78,7 @@ def plot_queries(
                 title = statement
                 y_label = 'Latency [s]'
             elif "TOTAL_TOTAL" == statement:
-                title = "応答時間の頻度による加重平均 [s]"
+                title = "Frequency-weighted Average Latency [s]"
                 y_label = 'Weighted latency [s]'
             elif "TOTAL" in statement:
                 title = statement
@@ -88,8 +88,9 @@ def plot_queries(
 
             label_data_hash = {}
             for label in label_dfs_hash.keys():
-                label_data_hash[label] = list(
-                    label_dfs_hash[label][statement][0]['mean'].values.tolist())
+                if statement in label_dfs_hash[label]:
+                    label_data_hash[label] = list(
+                        label_dfs_hash[label][statement][0]['mean'].values.tolist())
             plot_graph(title, 'timesteps', y_label, label_data_hash)
 
 
@@ -149,7 +150,7 @@ def avg_query_latency(dataframe):
     return avg_values
 
 
-def avg_upseart_latency(dataframe):
+def avg_upseart_latency(dataframe, insert_statement_num):
     values = [[]
               for _ in range((max(dataframe['timestep'].values.tolist()) + 1))]
     for ts, v in dataframe.query("name.str.startswith(\"UPDATE\")")[
@@ -158,7 +159,7 @@ def avg_upseart_latency(dataframe):
     for ts, v in dataframe.query("name.str.startswith(\"INSERT\")")[
             ['timestep', 'mean']].values.tolist():
         values[int(ts)].append(v)
-    avg_values = [sum(vs) / len(vs) for vs in values]
+    avg_values = [sum(vs) / insert_statement_num for vs in values]
     return avg_values
 
 
@@ -172,21 +173,22 @@ def show_unweighted_query_latency(label_dfs_hash):
     for label in label_grouped_dfs_hash.keys():
         label_data_hash[label] = avg_query_latency(label_dfs_hash[label])
     plot_graph(
-        "クエリの平均応答時間 [s]",
+        "Average Query Latency [s]",
         "timestep",
-        "クエリの平均応答時間 [s]",
+        "Average Query Latency [s]",
         label_data_hash)
 
 
-def show_unweighted_upsert_latency(label_dfs_hash):
+def show_unweighted_upsert_latency(label_dfs_hash, label_grouped_dfs_hash):
     label_data_hash = {}
     for label in label_grouped_dfs_hash.keys():
-        label_data_hash[label] = avg_upseart_latency(label_dfs_hash[label])
-        plot_graph(
-            "更新処理の応答時間 [s]",
-            "timestep",
-            "Upseart Latency[s]",
-            label_data_hash)
+        insert_statement_nums = len([s for s in label_grouped_dfs_hash[label].keys() if s.startswith("Aggregated-Upseart")])
+        label_data_hash[label] = avg_upseart_latency(label_dfs_hash[label], insert_statement_nums)
+    plot_graph(
+        "Average Insert Latency [s]",
+        "timestep",
+        "Average Insert Latency[s]",
+        label_data_hash)
 
 
 def show_upseart_plan_num(label_grouped_dfs_hash):
@@ -203,11 +205,11 @@ def show_total_weighted_latency_diff(label_dfs_hash):
             if label1 == label2:
                 continue
             print(label1 + " / " + label2)
-            print(
-                get_total_weighted_latency(
+            print(" " +
+                  str(get_total_weighted_latency(
                     label_dfs_hash[label1]) /
                 get_total_weighted_latency(
-                    label_dfs_hash[label2]))
+                    label_dfs_hash[label2])))
 
 
 label_grouped_dfs_hash = {}
@@ -216,15 +218,15 @@ max_timestep = -1
 for i in range(1, len(sys.argv)):
     file_name = sys.argv[i]
     dataframe = file2dataframe(file_name)
-    label = file_name.split('.')[0]
+    label = file_name.split('.')[0].split('/')[-1]
     max_timestep = max(dataframe['timestep'].values.tolist())
     statement_dfs = file_2_statement_dfs(dataframe)
 
     label_dfs_hash[label] = dataframe
     label_grouped_dfs_hash[label] = group_dfs_by_statement(statement_dfs)
-plot_queries(max_timestep, label_grouped_dfs_hash)
 
 show_unweighted_query_latency(label_dfs_hash)
-show_unweighted_upsert_latency(label_dfs_hash)
+show_unweighted_upsert_latency(label_dfs_hash, label_grouped_dfs_hash)
+plot_queries(max_timestep, label_grouped_dfs_hash)
 show_upseart_plan_num(label_grouped_dfs_hash)
 show_total_weighted_latency_diff(label_dfs_hash)
