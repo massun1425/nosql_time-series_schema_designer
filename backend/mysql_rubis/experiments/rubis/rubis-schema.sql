@@ -33,7 +33,7 @@ CREATE TABLE `bids` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`)
 /*) ENGINE=InnoDB AUTO_INCREMENT=20000001 DEFAULT CHARSET=latin1;*/
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=MEMORY DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -51,7 +51,7 @@ CREATE TABLE `buy_now` (
   `date` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=MEMORY DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -67,7 +67,7 @@ CREATE TABLE `categories` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`)
 /*) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=latin1;*/
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=MEMORY DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -84,10 +84,10 @@ CREATE TABLE `comments` (
   `item_id` int(10) unsigned NOT NULL,
   `rating` int(11) DEFAULT NULL,
   `date` datetime DEFAULT NULL,
-  `comment` text,
+  `comment` varchar(200),
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=MEMORY DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -100,7 +100,7 @@ DROP TABLE IF EXISTS `items`;
 CREATE TABLE `items` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(100) DEFAULT NULL,
-  `description` text,
+  `description` varchar (1000),
   `initial_price` float unsigned NOT NULL,
   `quantity` int(10) unsigned NOT NULL,
   `reserve_price` float unsigned DEFAULT '0',
@@ -113,7 +113,7 @@ CREATE TABLE `items` (
   `category` int(10) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=MEMORY DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -126,7 +126,7 @@ DROP TABLE IF EXISTS `old_items`;
 CREATE TABLE `old_items` (
   `id` int(10) unsigned NOT NULL,
   `name` varchar(100) DEFAULT NULL,
-  `description` text,
+  `description` varchar (200),
   `initial_price` float unsigned NOT NULL,
   `quantity` int(10) unsigned NOT NULL,
   `reserve_price` float unsigned DEFAULT '0',
@@ -139,7 +139,7 @@ CREATE TABLE `old_items` (
   `category` int(10) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=MEMORY DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -155,7 +155,7 @@ CREATE TABLE `regions` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`)
 /*) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;*/
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=MEMORY DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -178,7 +178,7 @@ CREATE TABLE `users` (
   `region` int(10) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=MEMORY DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
