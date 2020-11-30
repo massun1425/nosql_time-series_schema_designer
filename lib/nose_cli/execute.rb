@@ -148,8 +148,7 @@ module NoSE
 
       # Get the average execution time for a single query plan
       # @return [Measurements::Measurement]
-      def bench_query(backend, indexes, plan, index_values, iterations, repeat,
-                      weight: 1.0)
+      def bench_query(backend, indexes, plan, index_values, iterations, weight: 1.0)
 
         condition_list = execute_conditions plan.params, indexes, index_values,
                                             iterations
@@ -160,22 +159,21 @@ module NoSE
 
         retry_times = 10
         current_times = 0
-        1.upto(repeat) do
-          begin
-            # Execute each plan and measure the time
+        begin
+          # Execute each plan and measure the time
+          condition_list.each do |conditions|
             start_time = Time.now.utc
-            executed_results = condition_list.each { |conditions| prepared.execute conditions }
-            elapsed = Time.now.utc - start_time
-
-            measurement << (elapsed / iterations)
-            GC.start
-          rescue ThreadError
-            current_times += 1
-            STDERR.puts "ThreadError raised. Sleep before next retry"
-            sleep(20)
-            retry if current_times < retry_times
-            raise
+            prepared.execute conditions
+            measurement << (Time.now.utc - start_time)
           end
+          # plot_each_measurement each_execution_measurements
+          GC.start
+        rescue ThreadError
+          current_times += 1
+          STDERR.puts "ThreadError raised. Sleep before next retry"
+          sleep(20)
+          retry if current_times < retry_times
+          raise
         end
         #puts executed_results.inspect
 
@@ -197,7 +195,7 @@ module NoSE
       # Get the average execution time for a single update plan
       # @return [Measurements::Measurement]
       def bench_update(backend, indexes, plan, index_values,
-                       iterations, repeat, weight: 1.0, nullable_indexes: nil)
+                       iterations, weight: 1.0, nullable_indexes: nil)
         condition_list = execute_conditions plan.params, indexes, index_values,
                                             iterations
 
@@ -227,17 +225,13 @@ module NoSE
 
         measurement = Measurements::Measurement.new plan, weight: weight
 
-        1.upto(repeat) do
-          # Execute each plan and measure the time
+        # Execute each plan and measure the time
+        setting_list.zip(condition_list).each do |settings, conditions|
           start_time = Time.now.utc
-          setting_list.zip(condition_list).each do |settings, conditions|
-            prepared.each { |p| p.execute settings, conditions }
-          end
-          elapsed = Time.now.utc - start_time
-
-          measurement << (elapsed / iterations)
-          GC.start
+          prepared.each { |p| p.execute settings, conditions }
+          measurement << Time.now.utc - start_time
         end
+        GC.start
 
         measurement
       end
@@ -277,6 +271,16 @@ module NoSE
             end]
           end
         end.flatten
+      end
+
+      def plot_each_measurement(measurements)
+        FileUtils.mkdir_p "./measure/"
+        g = Gruff::Line.new
+        g.title = plan.query.comment.strip
+        g.dataxy 'measurement', (0...measurements.size).to_a, measurements
+        g.minimum_value = 0
+        g.write("./measure/#{plan.query.comment.gsub("--", "").strip}.png")
+        puts measurements.inspect
       end
     end
   end

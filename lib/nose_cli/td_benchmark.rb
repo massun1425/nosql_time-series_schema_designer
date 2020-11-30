@@ -22,8 +22,6 @@ module NoSE
              banner: 'ITERATIONS',
              desc: 'the number of times to execute each ' \
                                     'statement'
-      option :repeat, type: :numeric, default: 1,
-             desc: 'how many times to repeat the benchmark'
       option :group, type: :string, default: nil, aliases: '-g',
              desc: 'restrict the benchmark to statements in the ' \
                            'given group'
@@ -99,7 +97,7 @@ module NoSE
             measurement = nil
             #StackProf.run(mode: :wall, raw: true, out: "tmp/bench_query_#{timestep}.dump") do
               measurement = bench_query backend, plan.indexes, plan, index_values,
-                                        options[:num_iterations], options[:repeat],
+                                        options[:num_iterations],
                                         weight: weight
             #end
             next if measurement.empty?
@@ -138,8 +136,7 @@ module NoSE
                                           nullable_indexes: under_creating_indexes
 
               measurement = bench_update backend, indexes, plan, index_values,
-                                         options[:num_iterations],
-                                         options[:repeat], weight: weight
+                                         options[:num_iterations], weight: weight
               if measurement.empty?
                 puts "measurement was empty"
                 next

@@ -22,8 +22,6 @@ module NoSE
                               banner: 'ITERATIONS',
                               desc: 'the number of times to execute each ' \
                                     'statement'
-      option :repeat, type: :numeric, default: 1,
-                      desc: 'how many times to repeat the benchmark'
       option :group, type: :string, default: nil, aliases: '-g',
                      desc: 'restrict the benchmark to statements in the ' \
                            'given group'
@@ -60,8 +58,7 @@ module NoSE
           end.map(&:index)
 
           measurement = bench_query backend, indexes, plan, index_values,
-                                    options[:num_iterations], options[:repeat],
-                                    weight: weight
+                                    options[:num_iterations], weight: weight
           next if measurement.empty?
 
           measurement.estimate = plan.cost
@@ -87,8 +84,7 @@ module NoSE
             indexes = plan.query_plans.flat_map(&:indexes) << plan.index
 
             measurement = bench_update backend, indexes, plan, index_values,
-                                       options[:num_iterations],
-                                       options[:repeat], weight: weight
+                                       options[:num_iterations], weight: weight
             next if measurement.empty?
 
             measurement.estimate = plan.cost
