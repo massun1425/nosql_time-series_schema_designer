@@ -124,10 +124,31 @@ module NoSE
       def search_result(workload, cost_model, max_space = Float::INFINITY,
                         objective = Search::Objective::COST,
                         by_id_graph = false)
-        enumerated_indexes = IndexEnumerator.new(workload) \
+        enumerated_indexes = enumerate_indexes(workload, cost_model)
+        search = options[:iterative] ?
+                     Search::IterativeSearch.new(workload, cost_model, objective, by_id_graph, options[:prunedCF])
+                     : Search::Search.new(workload, cost_model, objective, by_id_graph, options[:prunedCF])
+        indexes = search.pruning_indexes_by_plan_cost enumerated_indexes
+        search.search_overlap indexes, max_space
+      end
+
+      # enumerate indexes
+      # @return [Search::Index]
+      def enumerate_indexes(workload, cost_model)
+        STDERR.puts "enumerate column families"
+        if options[:enumerator] == "pruned"
+          enumerated_indexes =
+              PrunedIndexEnumerator.new(workload, cost_model,
+                                        options[:is_shared_field_threshold], 2,2) \
                                             .indexes_for_workload.to_a
-        Search::Search.new(workload, cost_model, objective, by_id_graph) \
-                      .search_overlap enumerated_indexes, max_space, @options[:creation_cost]
+        elsif options[:enumerator] == "default"
+          enumerated_indexes = IndexEnumerator.new(workload) \
+                                              .indexes_for_workload.to_a
+        elsif options[:enumerator] == "simple"
+          enumerated_indexes = SimpleIndexEnumerator.new(workload) \
+                                              .indexes_for_workload.to_a
+        end
+        enumerated_indexes
       end
 
       # Load results of a previous search operation
@@ -466,6 +487,8 @@ module NoSE
         if result.is_a? NoSE::Search::TimeDependResults
           time_depend_output_update_plans_txt result.update_plans, file, weights,
                                               result.workload.mix
+
+          time_depend_output_update_plans_diff_txt reserialized_update_plans, file
         else
           output_update_plans_txt result.update_plans, file, weights,
                                   result.workload.mix
@@ -586,6 +609,8 @@ require_relative 'nose_cli/reformat'
 require_relative 'nose_cli/repl'
 require_relative 'nose_cli/recost'
 require_relative 'nose_cli/search'
+require_relative 'nose_cli/search_migrations'
+require_relative 'nose_cli/view_result_txt'
 require_relative 'nose_cli/search_all'
 require_relative 'nose_cli/search_bench'
 require_relative 'nose_cli/search_pattern'
