@@ -56,7 +56,7 @@ module NoSE
         result, backend = load_time_depend_plans plan_file, options
         loader = get_class('loader', options).new result.workload, backend
         backend.clear_keyspace
-        set_up_db(result, backend, loader)
+        setup_db(result, backend, loader)
 
         (0...result.timesteps).each do |timestep|
           STDERR.puts "\e[33m timestep: #{timestep} ===================================================== \e[0m"
@@ -178,14 +178,14 @@ module NoSE
           end
 
           migration_worker.stop
-          STDERR.puts "cleanup"
           exec_cleanup(backend, result, timestep)
+          GC.start
         end
       end
 
       private
 
-      def set_up_db(result, backend, loader)
+      def setup_db(result, backend, loader)
         indexes = result.time_depend_indexes.indexes_all_timestep.first.indexes
         # Produce the DDL and execute unless the dry run option was given
         backend.create_indexes(indexes, !options[:dry_run], options[:skip_existing],
@@ -209,6 +209,7 @@ module NoSE
       end
 
       def exec_cleanup(backend, result, timestep)
+        STDERR.puts "cleanup"
         migration_plans = result.migrate_plans.select{|mp| mp.start_time == timestep}
         plans_for_timestep = result.time_depend_plans.map{|tdp| tdp.plans[timestep + 1]}
 
@@ -284,7 +285,8 @@ module NoSE
             { 'measurements.name' => { display_name: 'name' } },
             { 'measurements.weight' => { display_name: 'weight' } },
             { 'measurements.mean' => { display_name: 'mean' } },
-            { 'measurements.estimate' => { display_name: 'cost' } }
+            { 'measurements.estimate' => { display_name: 'cost' } },
+            { 'measurements.standard_error' => { display_name: 'standard_error' } }
         ]
 
         tp table, *columns
@@ -294,7 +296,7 @@ module NoSE
       # @return [void]
       def td_output_csv(table)
         csv_str = CSV.generate do |csv|
-          csv << %w(timestep label group name weight mean cost)
+          csv << %w(timestep label group name weight mean cost standard_error)
 
           table.each do |group|
             group.measurements.each do |measurement|
@@ -305,7 +307,8 @@ module NoSE
                   measurement.name,
                   measurement.weight,
                   measurement.mean,
-                  measurement.estimate
+                  measurement.estimate,
+                  measurement.standard_error
               ]
             end
           end

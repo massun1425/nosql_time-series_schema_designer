@@ -71,8 +71,6 @@ module NoSE
             #statement_key_sets.each do |statement_keys|
 
             queries = workload.statement_weights.select{|k, _| statement_keys.include? k}.keys
-            #next unless queries.any? {|q| q.comment == " -- Q5"}
-            next unless queries.map{|q| q.comment}.to_set >= [" -- Q5", " -- Q2_outer", " -- Q2_inner"].to_set
 
             puts "$$$$$$$$ #{queries.map{|q| q.comment}.join(', ')}"
 

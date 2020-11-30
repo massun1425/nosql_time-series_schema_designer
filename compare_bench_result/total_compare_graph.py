@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as pyplot
 import pyparsing as pp
 import japanize_matplotlib
+import numpy as np
 
 
 def file2dataframe(file_path):
@@ -10,8 +11,9 @@ def file2dataframe(file_path):
         tmp_lines = f.readlines()
     column = pp.commaSeparatedList.parseString(tmp_lines[0]).asList()
     lines = []
+    header = 'timestep,label,group,name,weight,mean,cost,standard_error\n'
     for tl in tmp_lines[1:]:
-        if tl != 'timestep,label,group,name,weight,mean,cost\n':
+        if tl != header:
             tmp = pp.commaSeparatedList.parseString(tl).asList()
             tmp[3] = tmp[3].strip("\"")
             tmp[4] = tmp[4].strip("\"")
@@ -19,6 +21,7 @@ def file2dataframe(file_path):
     df = pd.DataFrame(lines, columns=column)
     df['timestep'] = df['timestep'].astype('int')
     df['mean'] = df['mean'].astype('float64')
+    df['standard_error'] = df['standard_error'].astype('float64')
     return df
 
 
@@ -34,7 +37,7 @@ def file_2_statement_dfs(df):
     return statement_dfs
 
 
-def plot_graph(title, x_label, y_label, label_data_hash):
+def plot_graph(title, x_label, y_label, label_data_hash, label_se_hash):
     x = list(range(0, len(list(label_data_hash.values())[0])))
 
     fig = pyplot.figure(dpi=300)
@@ -42,6 +45,9 @@ def plot_graph(title, x_label, y_label, label_data_hash):
     for label in label_data_hash.keys():
         if label_data_hash[label] is not None:
             ax.plot(x, label_data_hash[label], label=label, marker="o")
+            if label_se_hash is not None and not any([np.isnan(se) for se in label_se_hash[label]]):
+                doubled_se_interval = [se * 2 for se in label_se_hash[label]]
+                ax.errorbar(x, label_data_hash[label], doubled_se_interval, fmt='ro', capsize=4, ecolor='black')
 
     pyplot.title(title_with_newline(title), fontsize=10)
     pyplot.xlabel(x_label, fontsize=10)
@@ -67,12 +73,15 @@ def plot_queries(
         if statement.split('_')[1].startswith(
                 "UPDATE") or statement.split('_')[1].startswith("INSERT"):
             label_data_hash = {}
+            label_se_hash = {}
             for label in label_dfs_hash.keys():
                 if statement in label_dfs_hash[label]:
                     related_dfs1 = label_dfs_hash[label][statement]
                     label_data_hash[label] = sumup_each_series(
                         max_ts, related_dfs1)
-            plot_graph(statement, 'timesteps', 'Latency [s]', label_data_hash)
+                    label_se_hash[label] = list(
+                      label_dfs_hash[label][statement][0]['standard_error'].values.tolist())
+            plot_graph(statement, 'timesteps', 'Latency [s]', label_data_hash, label_se_hash)
         else:
             if statement.split('_')[1].startswith("SELECT"):
                 title = statement
@@ -87,11 +96,14 @@ def plot_queries(
                 raise('statement not match' + statement)
 
             label_data_hash = {}
+            label_se_hash = {}
             for label in label_dfs_hash.keys():
                 if statement in label_dfs_hash[label]:
                     label_data_hash[label] = list(
                         label_dfs_hash[label][statement][0]['mean'].values.tolist())
-            plot_graph(title, 'timesteps', y_label, label_data_hash)
+                    label_se_hash[label] = list(
+                      label_dfs_hash[label][statement][0]['standard_error'].values.tolist())
+            plot_graph(title, 'timesteps', y_label, label_data_hash, label_se_hash)
 
 
 def sumup_each_series(max_ts, dataframes):
@@ -176,19 +188,19 @@ def show_unweighted_query_latency(label_dfs_hash):
         "Average Query Latency [s]",
         "timestep",
         "Average Query Latency [s]",
-        label_data_hash)
+        label_data_hash, None)
 
 
 def show_unweighted_upsert_latency(label_dfs_hash, label_grouped_dfs_hash):
     label_data_hash = {}
     for label in label_grouped_dfs_hash.keys():
-        insert_statement_nums = len([s for s in label_grouped_dfs_hash[label].keys() if s.startswith("Aggregated-Upseart")])
+        insert_statement_nums = len([s for s in label_grouped_dfs_hash[label].keys() if "Aggregate" in s and ("INSERT" in s or "UPDATE" in s)])
         label_data_hash[label] = avg_upseart_latency(label_dfs_hash[label], insert_statement_nums)
     plot_graph(
         "Average Insert Latency [s]",
         "timestep",
         "Average Insert Latency[s]",
-        label_data_hash)
+        label_data_hash, None)
 
 
 def show_upseart_plan_num(label_grouped_dfs_hash):

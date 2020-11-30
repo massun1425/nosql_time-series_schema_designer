@@ -13,7 +13,7 @@ module NoSE
 
       # Allow the values array to store numbers and compute stats
       extend Forwardable
-      def_delegators :@values, :each, :<<, :size, :count, :length, :empty?
+      def_delegators :@values, :each, :<<, :size, :count, :length, :empty?, :standard_error
 
       include Enumerable
       include DescriptiveStatistics
@@ -30,6 +30,15 @@ module NoSE
       # @return [Fixnum]
       def weighted_mean(timestep = nil)
         (timestep.nil? ? @weight : @weight[timestep]) * mean
+      end
+
+      def standard_error
+        sum = @values.reduce(:+)
+        mean = sum.to_f / @values.size
+        var = @values.reduce(0){|a, b| a + (b - mean) ** 2} / (@values.size - 1)
+        standard_deviation = var ** 0.5
+        standard_error = standard_deviation / (size ** 0.5)
+        standard_error
       end
     end
   end
