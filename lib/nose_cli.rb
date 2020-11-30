@@ -354,6 +354,21 @@ module NoSE
         end
       end
 
+      def output_update_plan(plan, file, weight = nil, indents = 1)
+        file.puts Formatador.parse(" for [magenta]#{plan.index.key}[/] " \
+                                   "[yellow]$#{plan.cost}[/]")
+        query_weights = Hash[plan.query_plans.map do |query_plan|
+          [query_plan.query, weight]
+        end]
+        output_plans_txt plan.query_plans, file, 2, query_weights
+
+        plan.update_steps.each do |step|
+          file.puts '  ' * indents + step.inspect
+        end
+
+        file.puts
+      end
+
       # Output update plans as text
       # @return [void]
       def output_update_plans_txt(update_plans, file, weights, mix = nil)
@@ -379,22 +394,41 @@ module NoSE
           file.puts statement.label unless statement.label.nil?
           file.puts "#{statement.inspect} * #{weight} = #{total_cost * weight}"
           plans.each do |plan|
-            file.puts Formatador.parse(" for [magenta]#{plan.index.key}[/] " \
-                                       "[yellow]$#{plan.cost}[/]")
-            query_weights = Hash[plan.query_plans.map do |query_plan|
-              [query_plan.query, weight]
-            end]
-            output_plans_txt plan.query_plans, file, 2, query_weights
-
-            plan.update_steps.each do |step|
-              file.puts '  ' + step.inspect
-            end
-
-            file.puts
+            output_update_plan plan, file, weight
           end
 
           file.puts "\n"
         end
+      end
+
+      # @param Hash[statement, plans for each timestep]
+      def time_depend_output_update_plans_diff_txt(td_update_plans, file)
+        header = "Upseart plan diff \n" + '━' * 50
+        file.puts Formatador.parse("[blue]#{header}[/]")
+        td_update_plans.each do |stmt, plans|
+          file.puts Formatador.parse("[yellow]============= #{stmt.text} ============[/]")
+          plans.each_cons(2).to_a.each_with_index do |(former, current), i|
+            file.puts Formatador.parse('  ' + "[blue]timestep: #{i} to #{i + 1}[/]")
+            file.puts "  deleted plans ============================"
+            former.reject{|f| current.any?{|c| compare_update_plans f, c}}.each do |deleted_plan|
+              output_update_plan deleted_plan, file, -1, 2
+            end
+            file.puts "  added plans ============================"
+            current.reject{|c| former.any?{|f| compare_update_plans f, c}}.each do |added_plan|
+              output_update_plan added_plan, file, -1, 2
+            end
+          end
+        end
+        file.puts "\n"
+      end
+
+      def compare_update_plans(left , right)
+        return false if left.index != right.index
+        return false if left.query_plans != right.query_plans
+        return false if left.statement != right.statement
+        return false if left.update_fields != right.update_fields
+        return false if left.update_steps != right.update_steps
+        true
       end
 
       # Output the results of advising as text
