@@ -202,41 +202,69 @@ module NoSE
       def exec_migration(plan_file, result, timestep)
         migration_plans = result.migrate_plans.select{|mp| mp.start_time == timestep}
 
-        Parallel.each(migration_plans, in_threads: 10) do |migration_plan|
-          _, backend = load_time_depend_plans plan_file, options
-          prepare_next_indexes(migration_plan, backend)
-        end
-      end
-
-      def exec_cleanup(backend, result, timestep)
-        STDERR.puts "cleanup"
-        migration_plans = result.migrate_plans.select{|mp| mp.start_time == timestep}
-        plans_for_timestep = result.time_depend_plans.map{|tdp| tdp.plans[timestep + 1]}
-
+        #Parallel.each(migration_plans, in_threads: 10) do |migration_plan|
         migration_plans.each do |migration_plan|
-          drop_obsolete_tables(migration_plan, backend, plans_for_timestep)
+          _, backend = load_time_depend_plans plan_file, options
+          loader = get_class('loader', options).new result.workload, backend
+          prepare_next_indexes(migration_plan, backend, loader)
         end
       end
 
-      # join the value of indexes
-      def inner_loop_join(index_values)
+      def left_outer_join(backend, left_index, left_values, right_index, right_values)
+        overlap_fields = (left_index.all_fields & right_index.all_fields).to_a
+        right_index_hash = {}
+
+        starting = Time.now
+        # create hash for right values
+        right_values.each do |right_value|
+          next if backend.remove_null_place_holder_row([right_value]).empty?
+
+          key_fields = overlap_fields.select{|f| f.is_a? NoSE::Fields::IDField}.map{|fi| right_value.slice(fi.id)}
+          next if backend.remove_null_place_holder_row(key_fields).empty?
+
+          key_fields = overlap_fields.select{|f| f.is_a? NoSE::Fields::IDField}.map{|fi| right_value[fi.id].to_s}.join(',')
+          key_fields = Zlib.crc32(key_fields)
+          if right_index_hash.has_key?(key_fields)
+            right_index_hash[key_fields] << right_value
+          else
+            right_index_hash[key_fields] = [right_value]
+          end
+        end
+        puts "left outer join hash creation done: #{Time.now - starting}"
+
+        results = []
+        # iterate for left value to look for checking does related record exist
+        left_values.each do |left_value|
+          related_key = overlap_fields.select{|f| f.is_a? NoSE::Fields::IDField}.map{|fi| left_value[fi.id].to_s}.join(',')
+          related_key = Zlib.crc32(related_key)
+          if right_index_hash.has_key?(related_key)
+            right_index_hash[related_key].each do |right_value|
+              results << left_value.merge(right_value)
+            end
+          else
+            results << left_value.merge(backend.create_empty_record(right_index))
+          end
+        end.compact
+        puts "hash join done #{Time.now - starting}"
+        results
+      end
+
+      def full_outer_join(backend, index_values)
         return index_values.to_a.flatten(1)[1] if index_values.length == 1
 
         result = []
-        index_values.each_cons(2) do |former_index, next_index|
-          overlap_fields = former_index[0].all_fields & next_index[0].all_fields
-          former_index[1].each do |former_value|
-            next_index[1].each do |next_value|
-              next unless overlap_fields.all? { |overlap_field| former_value[overlap_field.id] == next_value[overlap_field.id]}
-              result << former_value.merge(next_value)
-            end
-          end
+        index_values.each_cons(2) do |former_index_value, next_index_value|
+          puts "former index #{former_index_value[0].key} has #{former_index_value[1].size} records"
+          puts "next index #{next_index_value[0].key} has #{next_index_value[1].size} records"
+          result += left_outer_join(backend, former_index_value[0], former_index_value[1], next_index_value[0], next_index_value[1])
+          result += left_outer_join(backend, next_index_value[0], next_index_value[1], former_index_value[0], former_index_value[1])
+          result.uniq!
         end
         result
       end
 
       # @param [MigratePlan, Backend]
-      def prepare_next_indexes(migrate_plan, backend)
+      def prepare_next_indexes(migrate_plan, backend, loader)
         STDERR.puts "\e[36m migrate from: \e[0m"
         migrate_plan.obsolete_plan&.map{|step| STDERR.puts '  ' + step.inspect}
         STDERR.puts "\e[36m to: \e[0m"
@@ -247,25 +275,45 @@ module NoSE
           query_plan = migrate_plan.prepare_plans.find{|pp| pp.index == new_step.index}&.query_plan
           next if query_plan.nil?
 
-          values = index_values(query_plan.indexes, backend)
-          obsolete_data = inner_loop_join(values)
+          target_index = new_step.index
+          values = index_records(query_plan.indexes, backend, target_index.all_fields)
+          obsolete_data = full_outer_join(backend, values)
 
-          STDERR.puts "===== creating index: #{new_step.index.key} for the migration"
-          unless backend.index_exists?(new_step.index)
-            STDERR.puts backend.create_index(new_step.index, !options[:dry_run], options[:skip_existing])
+          STDERR.puts "===== creating index: #{target_index.key} for the migration"
+          unless backend.index_exists?(target_index)
+            STDERR.puts backend.create_index(target_index, !options[:dry_run], options[:skip_existing])
           end
-          STDERR.puts "collected data size for #{new_step.index.key} is #{obsolete_data.size}"
-          backend.load_index_by_COPY(new_step.index, obsolete_data)
-          STDERR.puts "===== creation done: #{new_step.index.key} for the migration"
+          STDERR.puts "collected data size for #{target_index.key} is #{obsolete_data.size}"
+          backend.load_index_by_COPY(target_index, obsolete_data)
+          STDERR.puts "===== creation done: #{target_index.key} for the migration"
+
+          validate_migration_process(loader, target_index) #if ENV['BENCH_MODE'] == 'debug'
         end
       end
 
-      def drop_obsolete_tables(migrate_plan, backend, plans_for_timestep)
-        return if migrate_plan.obsolete_plan.nil?
-        migrate_plan.obsolete_plan.indexes.each do |index|
-          next if plans_for_timestep.any? {|plan| plan.indexes.include? index}
+      def validate_migration_process(loader, new_index)
+        STDERR.puts "validating migration process for #{new_index.key}"
+        loader.load_dummy [new_index], options[:loader], options[:progress],
+                    options[:limit], options[:skip_nonempty]
+      end
 
-          backend.drop_index(index)
+      def exec_cleanup(backend, result, timestep)
+        STDERR.puts "cleanup"
+        migration_plans = result.migrate_plans.select{|mp| mp.start_time == timestep}
+
+        return if timestep + 1 == result.timesteps
+        next_ts_indexes = result.time_depend_indexes.indexes_all_timestep[timestep + 1].indexes
+        drop_obsolete_tables(migration_plans, backend, next_ts_indexes)
+      end
+
+      def drop_obsolete_tables(migrate_plans, backend, next_ts_indexes)
+        obsolete_indexes = migrate_plans.flat_map do |mp|
+          next if mp.obsolete_plan.nil?
+          mp.obsolete_plan.indexes.select {|index| not next_ts_indexes.include?(index)}
+        end.uniq
+        obsolete_indexes.each do |obsolete_index|
+          STDERR.puts "drop CF: #{obsolete_index.key}"
+          backend.drop_index(obsolete_index)
         end
       end
 
