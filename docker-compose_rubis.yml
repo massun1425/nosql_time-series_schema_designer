@@ -1,0 +1,28 @@
+version: '3'
+services:
+  cassandra:
+    container_name: cassandra_migrate
+    build: ./backend/cassandra
+    ports:
+      - '7000:7000'
+      - '7001:7001'
+      - '7199:7199'
+      - '9042:9042'
+      - '9160:9160'
+  nose:
+    container_name: nose_migrate
+    build: .
+    tty: true
+  mysql:
+    container_name: mysql_rubis
+    build: ./backend/mysql_rubis
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: rubis
+    ports:
+      - '3306:3306'
+    command: --max_allowed_packet=62505856 --wait_timeout=86400 --max_heap_table_size=18589934592
+  client:
+    container_name: faker_client
+    build: ./backend/faker_client
+    tty: true

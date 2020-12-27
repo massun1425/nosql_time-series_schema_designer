@@ -84,7 +84,7 @@ CREATE TABLE `comments` (
   `item_id` int(10) unsigned NOT NULL,
   `rating` int(11) DEFAULT NULL,
   `date` datetime DEFAULT NULL,
-  `comment` varchar(200),
+  `comment` varchar(1000),
   PRIMARY KEY (`id`),
   UNIQUE KEY `id` (`id`)
 ) ENGINE=MEMORY DEFAULT CHARSET=latin1;

@@ -1,8 +1,10 @@
 alter table regions add column dummy tinyint(1);
+alter table regions alter column dummy set default 1;
 update regions set dummy=1;
 alter table comments change column from_user_id from_user int(10) unsigned not null, algorithm=COPY;
 alter table comments change column to_user_id to_user int(10) unsigned not null, algorithm=COPY;
 alter table categories add column dummy tinyint(1), algorithm=COPY;
+alter table categories alter column dummy set default 1;
 update categories set dummy=1;
 alter table comments change column item_id item int(10) unsigned not null, algorithm=COPY;
 alter table bids change column item_id item int(10) unsigned not null, algorithm=COPY;

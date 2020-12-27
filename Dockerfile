@@ -1,22 +1,5 @@
-FROM ubuntu:16.04
-MAINTAINER Yusuke Wakuta
-
-# Install packages for building ruby
-RUN apt-get update
-RUN apt-get install -y --force-yes build-essential curl git vim
-RUN apt-get install -y --force-yes zlib1g-dev libssl-dev libreadline-dev libyaml-dev libxml2-dev libxslt-dev
-RUN apt-get clean
-
-# Install rbenv and ruby-build
-RUN git clone https://github.com/sstephenson/rbenv.git /root/.rbenv
-RUN git clone https://github.com/sstephenson/ruby-build.git /root/.rbenv/plugins/ruby-build
-RUN ./root/.rbenv/plugins/ruby-build/install.sh
-ENV PATH /root/.rbenv/bin:$PATH
-RUN echo 'eval "$(rbenv init -)"' >> /etc/profile.d/rbenv.sh # or /etc/profile
-
-# Install multiple versions of ruby
-ENV CONFIGURE_OPTS --disable-install-doc
-RUN xargs -L 1 rbenv install 2.6.0
+FROM yusukew/ruby-2.6.5-ubuntu
+MAINTAINER Y-Wakuta
 
 ENV PATH /root/.rbenv/shims:$PATH
 
@@ -37,10 +20,19 @@ libmysqlclient-dev \
 libpq-dev \
 && apt-get clean
 
-ADD . /td_NoSE
+RUN echo "deb http://downloads.apache.org/cassandra/debian 40x main" | tee -a /etc/apt/sources.list.d/cassandra.sources.list
+RUN curl https://downloads.apache.org/cassandra/KEYS | apt-key add -
+RUN apt-get install -y apt-transport-https
+RUN apt-get update
+RUN apt-get install -y cassandra
 
-WORKDIR /td_NoSE
-RUN rbenv global 2.6.0
+RUN apt-get install -y python-pip
+RUN pip install six cassandra-driver
+
+ADD . /nose-cli
+
+WORKDIR /nose-cli
+RUN rbenv global 2.6.5
 RUN gem install bundler
 RUN bundle install
 

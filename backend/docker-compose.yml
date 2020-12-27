@@ -1,0 +1,26 @@
+version: '3'
+services:
+  mysql:
+    container_name: mysql_tpch
+    build: ./mysql_tpch
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tpch
+    ports:
+      - '3306:3306'
+    command: --max_allowed_packet=62505856 --wait_timeout=86400 --max_heap_table_size=4294967296
+  cassandra:
+    container_name: cassandra_migrate
+    build: ./cassandra
+    ports:
+      - '7000:7000'
+      - '7001:7001'
+      - '7199:7199'
+      - '9042:9042'
+      - '9160:9160'
+  tpch_reducer:
+    container_name: tpch_reducer
+    build: ./tpch_reducer
+    environment: 
+      - MYSQL_HOST=mysql
+    tty: true
