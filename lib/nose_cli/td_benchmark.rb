@@ -306,6 +306,13 @@ module NoSE
         drop_obsolete_tables(migration_plans, backend, next_ts_indexes)
       end
 
+      def index_records(indexes, backend, required_fields)
+        Hash[indexes.map do |index|
+          values = backend.index_records(index, required_fields).to_a
+          [index, values]
+        end]
+      end
+
       def drop_obsolete_tables(migrate_plans, backend, next_ts_indexes)
         obsolete_indexes = migrate_plans.flat_map do |mp|
           next if mp.obsolete_plan.nil?

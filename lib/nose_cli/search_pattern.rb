@@ -67,7 +67,7 @@ module NoSE
 
           puts "------------ statement_case_size: #{statement_key_sets.size} ----------------"
 
-          Parallel.each(statement_key_sets, in_processes: [Etc.nprocessors - 2, 2].max()) do |statement_keys|
+          Parallel.each(statement_key_sets, in_processes: [Parallel.processor_count - 2, 2].max()) do |statement_keys|
             #statement_key_sets.each do |statement_keys|
 
             queries = workload.statement_weights.select{|k, _| statement_keys.include? k}.keys
@@ -119,7 +119,7 @@ module NoSE
 
       #        puts "------------ statement_case_size: #{statement_key_sets.size} ----------------"
 
-      #        Parallel.each(statement_key_sets, in_processes: [Etc.nprocessors / 2, 2].max()) do |statement_keys|
+      #        Parallel.each(statement_key_sets, in_processes: [Parallel.processor_count / 2, 2].max()) do |statement_keys|
       #          if is_subset_found
       #            puts "subset is already found in other cases. exit.."
       #            return
@@ -163,7 +163,7 @@ module NoSE
           query_sets = query_sets.product(sqs).take(options[:each_try])
           query_sets.map!{|q| q.flatten!} if query_sets.first.first.is_a? Array
         end
-        Parallel.each(query_sets, in_processes: Etc.nprocessors - 5) do |queries|
+        Parallel.each(query_sets, in_processes: Parallel.processor_count - 5) do |queries|
           #query_sets.each do |queries|
           if workload.is_a? TimeDependWorkload
             sub_workload = TimeDependWorkload.new {|_| Model 'tpch'}
@@ -191,7 +191,7 @@ module NoSE
       end
 
       def search_timesteps(workload, cost_model)
-        Parallel.each((1..workload.timesteps).to_a, in_processes: Etc.nprocessors - 3) do |timestep_size|
+        Parallel.each((1..workload.timesteps).to_a, in_processes: Parallel.processor_count - 3) do |timestep_size|
           workload_tmp = workload.dup
           workload_tmp.timesteps = timestep_size
           statements = workload_tmp.statement_weights.map do |statement, value|

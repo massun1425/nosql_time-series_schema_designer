@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'table_print'
+require 'gruff'
 
 module NoSE
   module CLI
@@ -245,7 +246,12 @@ module NoSE
             indexes.each do |index|
               values = index_values[index]
               next if values.empty?
-              value = values[i % values.length][condition.field.id]
+              begin
+                value = values[i % values.length][condition.field.id]
+              rescue Exception => e
+                puts e
+                throw e
+              end
               break unless value.nil?
             end
 
