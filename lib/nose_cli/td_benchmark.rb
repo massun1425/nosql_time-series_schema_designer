@@ -29,7 +29,7 @@ module NoSE
              desc: 'abort if a column family is empty'
       option :totals, type: :boolean, default: false, aliases: '-t',
              desc: 'whether to include group totals in the output'
-      option :format, type: :string, default: 'txt',
+      option :format, type: :string, default: 'csv',
              enum: %w(txt csv), aliases: '-f',
              desc: 'the format of the output data'
 
