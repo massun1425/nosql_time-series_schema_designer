@@ -231,7 +231,8 @@ module NoSE
         file.puts Formatador.parse("[blue]#{header}[/]")
         indexes.each_with_index do |index_set, ts|
           file.puts Formatador.parse("[blue]for timestep: #{ts}[/]")
-          index_set.sort_by(&:key).each { |index| file.puts index.inspect }
+          index_set = [index_set] unless index_set.is_a?(Array) or index_set.is_a?(Set)
+          index_set.sort_by(&:hash_str).each { |index| file.puts index.inspect }
         end
         file.puts
       end
@@ -290,7 +291,7 @@ module NoSE
         header = "Migrate plans\n" + '━' * 50
         file.puts Formatador.parse("[blue]#{header}[/]")
         #plans.sort_by{|mp| [mp.start_time, (mp.query.is_a?(Query) ? mp.query.text : mp.query)]}.each do |migrate_plan|
-        plans.sort_by{|mp| [mp.start_time, mp.query.text]}.each do |migrate_plan|
+        plans.sort_by{|mp| [mp.query.text, mp.start_time]}.each do |migrate_plan|
           file.puts '  ' * (indent - 1) + (migrate_plan.query.is_a?(Query) ? migrate_plan.query.label : migrate_plan.query.text) \
             unless migrate_plan.query.nil? || (migrate_plan.query.is_a?(Query) ? migrate_plan.query.label.nil? : migrate_plan.query.nil?)
           file.puts '  ' * (indent - 1) + migrate_plan.query.inspect
@@ -463,7 +464,9 @@ module NoSE
 
         header = "Indexes\n" + '━' * 50
         if result.is_a? NoSE::Search::TimeDependResults
-          time_depend_output_indexes_txt header, result.indexes, file
+          #time_depend_output_indexes_txt header, result.indexes, file
+          indexes_each_ts = result.time_depend_indexes.indexes_all_timestep.map{|tdi| tdi.indexes}
+          time_depend_output_indexes_txt header, indexes_each_ts, file
         else
           output_indexes_txt header, result.indexes, file
         end

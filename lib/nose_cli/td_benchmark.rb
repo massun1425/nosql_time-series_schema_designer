@@ -49,6 +49,8 @@ module NoSE
                            '(useful for testing)'
       option :skip_nonempty, type: :boolean, default: true, aliases: '-s',
              desc: 'ignore indexes which are not empty'
+      option :validate_migration, type: :boolean, default: true, aliases: '-v',
+             desc: 'whether migration process'
 
       def td_benchmark(plan_file)
         label = File.basename plan_file, '.*'
@@ -74,9 +76,9 @@ module NoSE
             end
           end
 
-          migrator = Migrator::Migrator.new(backend, loader)
-          #migration_worker, _ = exec_migration_async(result, timestep, migrator)
-          exec_migration(result, timestep, migrator)
+          migrator = Migrator::Migrator.new(backend, loader, options[:loader], options[:validate_migration])
+          #migration_worker, _ = migrate_async(result, timestep, migrator)
+          migrator.migrate(result, timestep)
 
           indexes_for_this_timestep = result.indexes_used_in_plans(timestep)
           index_values = index_values indexes_for_this_timestep, backend,
@@ -178,7 +180,7 @@ module NoSE
             td_output_csv table
           end
 
-          #migration_worker.stop
+          #migrator.stop
           migrator.exec_cleanup(result, timestep)
           GC.start
         end
@@ -198,23 +200,6 @@ module NoSE
                     options[:limit], options[:skip_nonempty]
         load_ended = Time.now.utc
         STDERR.puts "whole loading time: " + (load_ended - load_started).to_s
-      end
-
-      def exec_migration(result, timestep, migrator)
-        migration_plans = result.migrate_plans.select{|mp| mp.start_time == timestep}
-
-        #Parallel.each(migration_plans, in_threads: 10) do |migration_plan|
-        migration_plans.each do |migration_plan|
-          migrator.prepare_next_indexes(migration_plan, options)
-        end
-      end
-
-      def exec_migration_async(result, timestep, migrator)
-        migration_worker = NoSE::Worker.new {|_| exec_migration(result, timestep, migrator)}
-        [migration_worker].map(&:run).each(&:join)
-        thread = migration_worker.execute
-        thread.join
-        [migration_worker, thread]
       end
 
       # Output the table of results
