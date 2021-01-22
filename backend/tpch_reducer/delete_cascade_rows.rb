@@ -38,8 +38,8 @@ table_chain = {
 #delete_rows_for_ratio(client, "part", 100)
 #delete_rows_for_ratio(client, "customer", 50)
 
-delete_rows_for_ratio(client, "supplier", 200)
-delete_rows_for_ratio(client, "part", 200)
-delete_rows_for_ratio(client, "customer", 100)
+delete_rows_for_ratio(client, "supplier", 2)
+delete_rows_for_ratio(client, "part", 2)
+delete_rows_for_ratio(client, "customer", 2)
 chain_relationship(client, table_chain, "region")
 chain_relationship(client, table_chain, "part")

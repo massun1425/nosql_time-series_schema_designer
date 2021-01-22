@@ -63,7 +63,7 @@ insert([
   comments,
   buy_now
 ], {
-  host: 'localhost',
+  host: 'mysql',
   user: 'root',
   password: 'root',
   database: 'rubis'

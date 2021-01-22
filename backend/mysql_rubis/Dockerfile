@@ -7,6 +7,7 @@ RUN echo "net_write_timeout=5000" >> /etc/mysql/mysql.conf.d/mysqld.cnf
 
 ADD ./experiments /experiments
 ADD ./docker-entrypoint-initdb.d/ /docker-entrypoint-initdb.d
+ADD ./additional_index.sql /
 WORKDIR /experiments
 
 WORKDIR /experiments/rubis
