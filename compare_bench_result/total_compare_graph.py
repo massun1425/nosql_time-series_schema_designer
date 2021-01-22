@@ -11,7 +11,11 @@ def file2dataframe(file_path):
         tmp_lines = f.readlines()
     column = pp.commaSeparatedList.parseString(tmp_lines[0]).asList()
     lines = []
-    header = 'timestep,label,group,name,weight,mean,cost,standard_error\n'
+    if 'standard_error' in column:
+      header = 'timestep,label,group,name,weight,mean,cost,standard_error\n'
+    else:
+      header = 'timestep,label,group,name,weight,mean,cost\n'
+
     for tl in tmp_lines[1:]:
         if tl != header:
             tmp = pp.commaSeparatedList.parseString(tl).asList()
@@ -21,7 +25,8 @@ def file2dataframe(file_path):
     df = pd.DataFrame(lines, columns=column)
     df['timestep'] = df['timestep'].astype('int')
     df['mean'] = df['mean'].astype('float64')
-    df['standard_error'] = df['standard_error'].astype('float64')
+    if 'standard_error' in column:
+      df['standard_error'] = df['standard_error'].astype('float64')
     return df
 
 
@@ -37,23 +42,29 @@ def file_2_statement_dfs(df):
     return statement_dfs
 
 
-def plot_graph(title, x_label, y_label, label_data_hash, label_se_hash):
+def plot_graph(title, x_label, y_label, label_data_hash, label_cost_hash, label_se_hash):
     x = list(range(0, len(list(label_data_hash.values())[0])))
 
-    fig = pyplot.figure(dpi=300)
+    #fig = pyplot.figure(dpi=300)
+    fig = pyplot.figure(dpi=100)
     ax = fig.add_subplot(1, 1, 1)
     for label in label_data_hash.keys():
         if label_data_hash[label] is not None:
             ax.plot(x, label_data_hash[label], label=label, marker="o")
-            if label_se_hash is not None and not any([np.isnan(se) for se in label_se_hash[label]]):
+            #if label in label_cost_hash:
+                #ax.plot(x, label_cost_hash[label], label=label + "_cost", marker="x")
+            if bool(label_se_hash) and not any([np.isnan(se) for se in label_se_hash[label]]):
                 doubled_se_interval = [se * 2 for se in label_se_hash[label]]
-                ax.errorbar(x, label_data_hash[label], doubled_se_interval, fmt='ro', capsize=4, ecolor='black')
+                #ax.errorbar(x, label_data_hash[label], doubled_se_interval, fmt='ro', capsize=4, ecolor='black')
 
-    pyplot.title(title_with_newline(title), fontsize=10)
+    pyplot.title(title_with_newline(title), fontsize=8)
     pyplot.xlabel(x_label, fontsize=10)
     pyplot.ylabel(y_label, fontsize=10)
     ax.set_ylim(ymin=0)
+    ax.set_xlim(xmin=0)
+    ax.set_xlim(xmax=max(x))
     pyplot.legend()
+    fig.savefig(y_label + ".png")
     fig.show()
 
 
@@ -61,7 +72,7 @@ def title_with_newline(title):
     tmp = ""
     for t in title:
         tmp += t
-        if len(tmp) % 70 == 0:
+        if len(tmp) % 90 == 0:
             tmp += "\n"
     return tmp
 
@@ -72,6 +83,7 @@ def plot_queries(
     for statement in list(label_dfs_hash.values())[0].keys():
         if statement.split('_')[1].startswith(
                 "UPDATE") or statement.split('_')[1].startswith("INSERT"):
+            continue
             label_data_hash = {}
             label_se_hash = {}
             for label in label_dfs_hash.keys():
@@ -79,8 +91,9 @@ def plot_queries(
                     related_dfs1 = label_dfs_hash[label][statement]
                     label_data_hash[label] = sumup_each_series(
                         max_ts, related_dfs1)
-                    label_se_hash[label] = list(
-                      label_dfs_hash[label][statement][0]['standard_error'].values.tolist())
+                    if 'standard_error' in label_dfs_hash[label][statement][0].columns:
+                      label_se_hash[label] = list(
+                        label_dfs_hash[label][statement][0]['standard_error'].values.tolist())
             plot_graph(statement, 'timesteps', 'Latency [s]', label_data_hash, label_se_hash)
         else:
             if statement.split('_')[1].startswith("SELECT"):
@@ -89,6 +102,9 @@ def plot_queries(
             elif "TOTAL_TOTAL" == statement:
                 title = "Frequency-weighted Average Latency [s]"
                 y_label = 'Weighted latency [s]'
+                #title = "応答時間の各処理の実行頻度による加重平均 [s]"
+                #title = ""
+                #y_label = '各処理の実行頻度による応答時間の加重平均 [s]'
             elif "TOTAL" in statement:
                 title = statement
                 y_label = 'Weighted latency [s]'
@@ -98,12 +114,18 @@ def plot_queries(
             label_data_hash = {}
             label_se_hash = {}
             for label in label_dfs_hash.keys():
+                label_cost_hash = {}
                 if statement in label_dfs_hash[label]:
                     label_data_hash[label] = list(
                         label_dfs_hash[label][statement][0]['mean'].values.tolist())
-                    label_se_hash[label] = list(
-                      label_dfs_hash[label][statement][0]['standard_error'].values.tolist())
-            plot_graph(title, 'timesteps', y_label, label_data_hash, label_se_hash)
+                    if 'standard_error' in label_dfs_hash[label][statement][0].columns:
+                      label_se_hash[label] = list(
+                        label_dfs_hash[label][statement][0]['standard_error'].values.tolist())
+            plot_graph(title, 'timestep', y_label, label_data_hash, label_cost_hash, label_se_hash)
+
+           # if statement.split('_')[1].startswith("SELECT"):
+           #     label_cost_hash[label] = list(label_dfs_hash[label][statement][0]['cost'].values.tolist())
+           # plot_graph(title, 'timestep', y_label, label_data_hash, label_cost_hash, label_se_hash)
 
 
 def sumup_each_series(max_ts, dataframes):
@@ -111,7 +133,8 @@ def sumup_each_series(max_ts, dataframes):
     for df in dataframes:
         for t, m in df[['timestep', 'mean']].values.tolist():
             tmp[int(t)] += m
-    return tmp
+
+    return np.array([t if t is not 0 else np.nan for t in tmp])
 
 
 def group_dfs_by_statement(dfs):
@@ -171,6 +194,8 @@ def avg_upseart_latency(dataframe, insert_statement_num):
     for ts, v in dataframe.query("name.str.startswith(\"INSERT\")")[
             ['timestep', 'mean']].values.tolist():
         values[int(ts)].append(v)
+    if insert_statement_num == 0:
+        return [0]
     avg_values = [sum(vs) / insert_statement_num for vs in values]
     return avg_values
 
@@ -188,7 +213,7 @@ def show_unweighted_query_latency(label_dfs_hash):
         "Average Query Latency [s]",
         "timestep",
         "Average Query Latency [s]",
-        label_data_hash, None)
+        label_data_hash, {}, {})
 
 
 def show_unweighted_upsert_latency(label_dfs_hash, label_grouped_dfs_hash):
@@ -200,7 +225,7 @@ def show_unweighted_upsert_latency(label_dfs_hash, label_grouped_dfs_hash):
         "Average Insert Latency [s]",
         "timestep",
         "Average Insert Latency[s]",
-        label_data_hash, None)
+        label_data_hash, {}, {})
 
 
 def show_upseart_plan_num(label_grouped_dfs_hash):
