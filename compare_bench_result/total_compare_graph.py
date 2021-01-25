@@ -6,8 +6,6 @@ import pyparsing as pp
 import japanize_matplotlib
 import numpy as np
 
-# 1/22 TODO:
-# グループ毎に加重していない応答時間の和の計算
 
 class FileLoader:
     @classmethod
@@ -78,7 +76,7 @@ class Graph:
         output_dir= DIR_NAME + "/figs/"
         Path(output_dir).mkdir(parents=True, exist_ok=True)
         fig.savefig(output_dir + title.split('--')[-1].strip(" ") + "_" + y_label.strip(" ") + ".png")
-        fig.show()
+        #fig.show()
 
     @classmethod
     def title_with_newline(cls, title):
@@ -195,6 +193,15 @@ def avg_query_latency(df):
     return avg_values
 
 
+def avg_group_latency(df, group_name):
+    values = [[]
+              for _ in range((max(df['timestep'].values.tolist()) + 1))]
+    for ts, v in df.query("group == @group_name and name != \"TOTAL\"")[['timestep', 'mean']].values.tolist():
+        values[int(ts)].append(v)
+    avg_values = [sum(vs) / len(vs) for vs in values]
+    return avg_values
+
+
 def avg_upseart_latency(df, insert_statement_num):
     values = [[]
               for _ in range((max(df['timestep'].values.tolist()) + 1))]
@@ -224,6 +231,24 @@ def plot_unweighted_query_latency(label_dfs_hash):
         "timestep",
         "Average Query Latency [s]",
         label_data_hash, {})
+
+
+def plot_unweighted_group_latency(label_dfs_hash):
+    label_data_hash = {}
+
+    groups = set()
+    for label in label_grouped_dfs_hash.keys():
+        groups |= set(label_dfs_hash[label].group.values)
+
+    groups.remove("TOTAL")
+    for g in groups:
+        for label in label_grouped_dfs_hash.keys():
+            label_data_hash[label] = avg_group_latency(label_dfs_hash[label], g)
+        Graph.plot_graph(
+            "Average Latency of " + g + " group [s]",
+            "timestep",
+            "Average Latency [s]",
+            label_data_hash, {})
 
 
 def plot_unweighted_upsert_latency(label_dfs_hash, label_grouped_dfs_hash):
@@ -274,6 +299,7 @@ for i in range(1, len(sys.argv)):
     label_grouped_dfs_hash[label] = group_dfs_by_statement(statement_dfs)
 
 DIR_NAME = dir_name
+plot_unweighted_group_latency(label_dfs_hash)
 plot_unweighted_query_latency(label_dfs_hash)
 plot_unweighted_upsert_latency(label_dfs_hash, label_grouped_dfs_hash)
 plot_queries(max_timestep, label_grouped_dfs_hash, )
