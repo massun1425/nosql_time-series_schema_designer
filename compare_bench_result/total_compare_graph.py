@@ -6,6 +6,12 @@ import pyparsing as pp
 import japanize_matplotlib
 import numpy as np
 
+# 総実行時間
+# 1. 各時刻の各処理の応答時間に実行頻度を掛け合わせる (各処理の加重した応答時間)
+# 2. 各グループごとに、グループ内の処理の加重した応答時間の平均値をとる
+# 3. 時刻ごとにグループの加重した応答時間の平均値を足し合わせる
+# 4. 全ての時刻においてこの値を足し合わせる。
+
 
 class FileLoader:
     @classmethod
@@ -45,29 +51,68 @@ class FileLoader:
 
 class Graph:
     @classmethod
+    def convert_legends(cls, legend):
+        convert_hash = {
+            "bench_tpch_22q_prop": "提案手法",
+            "bench_tpch_22q_static": "平均実行頻度に対する最適化",
+            "bench_tpch_22q_first": "開始時実行頻度に対する最適化",
+            "bench_tpch_22q_last": "終了時実行頻度に対する最適化",
+
+            "simple_prop": "提案手法",
+            "simple_static": "平均実行頻度に対する最適化",
+            "simple_first": "開始時実行頻度に対する最適化",
+            "simple_last": "終了時実行頻度に対する最適化",
+
+            "bench_90per_8008326000_prop": "提案手法",
+            "bench_90per_8008326000_static": "平均実行頻度に対する最適化",
+            "bench_90per_8008326000_first": "開始時実行頻度に対する最適化",
+            "bench_90per_8008326000_last": "終了時実行頻度に対する最適化",
+
+        }
+        if legend in convert_hash:
+            return convert_hash[legend]
+        return legend
+
+    #@classmethod
+    #def convert_labels(cls, label):
+    #    convert_hash = {
+    #        "Average Latency [s]": "平均応答時間 [s]",
+    #        "Weighted Latency [s]": "応答時間の各処理の実行頻度による加重平均値 [s]",
+    #        "timestep": "時刻"
+    #    }
+    #    if label in convert_hash:
+    #        return convert_hash[label]
+    #    return label
+
+
+    @classmethod
     def plot_graph(cls, title, x_label, y_label, label_data_hash, label_se_hash):
         x = list(range(0, len(list(label_data_hash.values())[0])))
 
         # fig = pyplot.figure(dpi=300)
-        fig = pyplot.figure(dpi=200)
+        #fig = pyplot.figure(dpi=200, figsize=(80, 60))
+        fig = pyplot.figure(figsize=(8, 5))
         ax = fig.add_subplot(1, 1, 1)
         y_max_lim = 0
-        for label in label_data_hash.keys():
+        makers = ["o", "v", "^", "<", ">", "1", "2", "3"]
+        for idx, label in enumerate(label_data_hash.keys()):
             if label_data_hash[label] is not None:
-                ax.plot(x, label_data_hash[label], label=label, marker="o")
+                ax.plot(x, label_data_hash[label], marker=makers[idx], label=Graph.convert_legends(label), linewidth=1.5, markersize=4)
                 if y_max_lim < max(label_data_hash[label]):
                     y_max_lim = max(label_data_hash[label])
                 # if label in label_cost_hash:
                 # ax.plot(x, label_cost_hash[label], label=label + "_cost", marker="x")
                 if bool(label_se_hash) and not any([np.isnan(se) for se in label_se_hash[label]]):
                     doubled_se_interval = [se * 2 for se in label_se_hash[label]]
-                    ax.errorbar(x, label_data_hash[label], doubled_se_interval, fmt='o', capsize=2, ecolor='black', markeredgecolor = "black", color='w')
                     #ax.errorbar(x, label_data_hash[label], doubled_se_interval, fmt='o', capsize=2, ecolor='black', markeredgecolor = "black", color='w')
 
-        pyplot.title(Graph.title_with_newline(title), fontsize=8)
-        #pyplot.subplots_adjust(left=1.0, right=0.95, bottom=0.1, top=0.8)
-        pyplot.xlabel(x_label, fontsize=10)
-        pyplot.ylabel(y_label, fontsize=10)
+        pyplot.rcParams["font.size"] = 12
+        pyplot.title(Graph.title_with_newline(title), fontsize=11)
+        pyplot.legend(fontsize=11)
+        #x_label = Graph.convert_labels(x_label)
+        #y_label = Graph.convert_labels(y_label)
+        pyplot.xlabel(x_label)
+        pyplot.ylabel(y_label)
         ax.set_ylim(ymin=0)
         ax.set_ylim(ymax=y_max_lim * 1.1)
         ax.set_xlim(xmin=0)
@@ -75,7 +120,7 @@ class Graph:
         pyplot.legend()
         output_dir= DIR_NAME + "/figs/"
         Path(output_dir).mkdir(parents=True, exist_ok=True)
-        fig.savefig(output_dir + title.split('--')[-1].strip(" ") + "_" + y_label.strip(" ") + ".png")
+        fig.savefig(output_dir + title.split('--')[-1].strip(" ") + "_" + y_label.strip(" ") + ".pdf")
         #fig.show()
 
     @classmethod
@@ -95,27 +140,24 @@ def plot_queries(
         if statement.split('_')[1].startswith(
                 "UPDATE") or statement.split('_')[1].startswith("INSERT"):
             continue
-            label_data_hash = {}
-            label_se_hash = {}
-            for label in label_dfs_hash.keys():
-                if statement in label_dfs_hash[label]:
-                    related_dfs1 = label_dfs_hash[label][statement]
-                    label_data_hash[label] = sumup_each_series(
-                        max_ts, related_dfs1)
-                    if 'standard_error' in label_dfs_hash[label][statement][0].columns:
-                        label_se_hash[label] = list(
-                            label_dfs_hash[label][statement][0]['standard_error'].values.tolist())
-            Graph.plot_graph(statement, 'timesteps', 'Latency [s]', label_data_hash, label_se_hash)
+            #label_data_hash = {}
+            #label_se_hash = {}
+            #for label in label_dfs_hash.keys():
+            #    if statement in label_dfs_hash[label]:
+            #        related_dfs1 = label_dfs_hash[label][statement]
+            #        label_data_hash[label] = sumup_each_series(
+            #            max_ts, related_dfs1)
+            #        if 'standard_error' in label_dfs_hash[label][statement][0].columns:
+            #            label_se_hash[label] = list(
+            #                label_dfs_hash[label][statement][0]['standard_error'].values.tolist())
+            #Graph.plot_graph(statement, 'timesteps', 'Latency [s]', label_data_hash, label_se_hash)
         else:
             if statement.split('_')[1].startswith("SELECT"):
-                plot_statement(label_dfs_hash, statement, 'mean', statement, 'Latency [s]', True)
+                plot_statement(label_dfs_hash, statement, 'mean', statement.split("--")[1], 'Latency [s]', True)
                 plot_statement(label_dfs_hash, statement, 'cost', "COST" + "\n" + statement, 'Estimated Cost', False)
                 continue
             elif "TOTAL_TOTAL" == statement:
-                #title = "応答時間の各処理の実行頻度による加重平均 [s]"
-                #title = ""
-                #y_label = '各処理の実行頻度による応答時間の加重平均 [s]'
-                plot_statement(label_dfs_hash, statement, 'mean',"Frequency-weighted Average Latency [s]", 'Weighted latency [s]', False)
+                plot_statement(label_dfs_hash, statement, 'mean',"Frequency-weighted Total Latency [s]", 'Weighted latency [s]', False)
                 continue
             elif "TOTAL" in statement:
                 plot_statement(label_dfs_hash, statement, 'mean', statement, 'Weighted latency [s]', False)
@@ -193,12 +235,35 @@ def avg_query_latency(df):
     return avg_values
 
 
+# count the number of statements in the group
+# count INSERT into each cf as one original INSERT statement
+def count_statement_num_for_each_ts(df, group_name):
+    statement_counts = [[] for _ in range((max(df['timestep'].values.tolist()) + 1))]
+    for ts in sorted(set(list(df.query("group == @group_name and name != \"TOTAL\"")['timestep'].values.tolist()))):
+        statement_counts[int(ts)] = len(set(list(map(lambda x : x[0].split("for")[0], df.query("group == @group_name and name != \"TOTAL\" and timestep == @ts")[['name']].values.tolist()))))
+    return statement_counts
+
+
 def avg_group_latency(df, group_name):
-    values = [[]
-              for _ in range((max(df['timestep'].values.tolist()) + 1))]
+    values = [[] for _ in range((max(df['timestep'].values.tolist()) + 1))]
     for ts, v in df.query("group == @group_name and name != \"TOTAL\"")[['timestep', 'mean']].values.tolist():
         values[int(ts)].append(v)
-    avg_values = [sum(vs) / len(vs) for vs in values]
+
+    statement_counts = count_statement_num_for_each_ts(df, group_name)
+    avg_values = [sum(vs) / statement_counts[idx] for idx, vs in enumerate(values)]
+    return avg_values
+
+
+def weighted_avg_group_latency(df, group_name):
+    weighted_group_totals = [[] for _ in range((max(df['timestep'].values.tolist()) + 1))]
+    # TOTAL mean of each group is already weighted
+    for ts, v in df.query("group == @group_name and name == \"TOTAL\"")[['timestep', 'mean']].values.tolist():
+        if int(ts) in weighted_group_totals:
+            raise Exception
+        weighted_group_totals[int(ts)] = v
+
+    statement_counts = count_statement_num_for_each_ts(df, group_name)
+    avg_values = [t / statement_counts[idx] for idx, t in enumerate(weighted_group_totals)]
     return avg_values
 
 
@@ -217,17 +282,13 @@ def avg_upseart_latency(df, insert_statement_num):
     return avg_values
 
 
-def get_total_weighted_latency(df):
-    return sum(df.query("group == \"TOTAL\" and name == \"TOTAL\"")[
-                   'mean'].values.tolist())
-
-
 def plot_unweighted_query_latency(label_dfs_hash):
     label_data_hash = {}
     for label in label_grouped_dfs_hash.keys():
         label_data_hash[label] = avg_query_latency(label_dfs_hash[label])
     Graph.plot_graph(
-        "Average Query Latency [s]",
+        #"Average Query Latency [s]",
+        "",
         "timestep",
         "Average Query Latency [s]",
         label_data_hash, {})
@@ -244,11 +305,31 @@ def plot_unweighted_group_latency(label_dfs_hash):
     for g in groups:
         for label in label_grouped_dfs_hash.keys():
             label_data_hash[label] = avg_group_latency(label_dfs_hash[label], g)
+
+        if g == "Even":
+            g = "偶数グループ"
+        elif g == "Odd":
+            g = "奇数グループ"
+
+        if g == "Test1":
+            g = "グループ1"
+        elif g == "Test2":
+            g = "グループ2"
+
         Graph.plot_graph(
-            "Average Latency of " + g + " group [s]",
-            "timestep",
-            "Average Latency [s]",
+            #g + "の平均応答時間 [s]",
+            "",
+            "時刻",
+            g + "の平均応答時間 [s]",
             label_data_hash, {})
+
+        #Graph.plot_graph(
+        #   #"Average Latency of " + g + " group [s]",
+        #   t,
+        #   "時刻",
+        #   "平均応答時間 [s]",
+        #   label_data_hash, {})
+
 
 
 def plot_unweighted_upsert_latency(label_dfs_hash, label_grouped_dfs_hash):
@@ -272,16 +353,53 @@ def show_upseart_plan_num(label_grouped_dfs_hash):
 
 def show_total_weighted_latency_diff(label_dfs_hash):
     print("TOTAL diff")
-    for label1 in label_dfs_hash.keys():
-        for label2 in label_dfs_hash.keys():
+    label_total_weighted_avg_hash = get_total_weighted_avg_hash(label_dfs_hash)
+    for label1 in label_total_weighted_avg_hash.keys():
+        for label2 in label_total_weighted_avg_hash.keys():
             if label1 == label2:
                 continue
             print(label1 + " / " + label2)
-            print(" " +
-                  str(get_total_weighted_latency(
-                      label_dfs_hash[label1]) /
-                      get_total_weighted_latency(
-                          label_dfs_hash[label2])))
+            label1_total_weighted_latency = sum(label_total_weighted_avg_hash[label1])
+            label2_total_weighted_latency = sum(label_total_weighted_avg_hash[label2])
+            print(label1 + ": " + str(label1_total_weighted_latency))
+            print(label2 + ": " + str(label2_total_weighted_latency))
+            print(" " + str(label1_total_weighted_latency / label2_total_weighted_latency))
+
+
+def get_total_weighted_avg_hash(label_dfs_hash):
+    label_total_weighted_avg_hash = {}
+
+    groups = set()
+    for label in label_grouped_dfs_hash.keys():
+        groups |= set(label_dfs_hash[label].group.values)
+
+    groups.remove("TOTAL")
+    for label in label_grouped_dfs_hash.keys():
+        for g in groups:
+            if label in label_total_weighted_avg_hash:
+                label_total_weighted_avg_hash[label] = \
+                    [a + b for a, b in
+                        zip(label_total_weighted_avg_hash[label], weighted_avg_group_latency(label_dfs_hash[label], g))]
+            else:
+                label_total_weighted_avg_hash[label] = weighted_avg_group_latency(label_dfs_hash[label], g)
+    return label_total_weighted_avg_hash
+
+
+
+def plot_weighted_total_latency(label_dfs_hash):
+    label_total_weighted_avg_hash = get_total_weighted_avg_hash(label_dfs_hash)
+
+    #Graph.plot_graph(
+    #    "Frequency weighted average latency [s]",
+    #    "timestep",
+    #    "Frequency weighted average latency [s]",
+    #    label_total_weighted_avg_hash, {})
+    Graph.plot_graph(
+        #"各処理の実行頻度による応答時間の加重平均 [s]",
+        "",
+        "時刻",
+        "各処理の実行頻度による応答時間の加重平均 [s]",
+        label_total_weighted_avg_hash, {})
 
 
 label_grouped_dfs_hash = {}
@@ -290,7 +408,8 @@ max_timestep = -1
 for i in range(1, len(sys.argv)):
     file_name = sys.argv[i]
     dataframe = FileLoader.file2dataframe(file_name)
-    dir_name = file_name.split('.')[0].split('/')[0]
+    #dir_name = file_name.split('.')[0].split('/')[0]
+    dir_name = "/".join(file_name.split('.')[0].split('/')[0:-1])
     label = file_name.split('.')[0].split('/')[-1]
     max_timestep = max(dataframe['timestep'].values.tolist())
     statement_dfs = FileLoader.file_2_statement_dfs(dataframe)
@@ -298,7 +417,9 @@ for i in range(1, len(sys.argv)):
     label_dfs_hash[label] = dataframe
     label_grouped_dfs_hash[label] = group_dfs_by_statement(statement_dfs)
 
+
 DIR_NAME = dir_name
+plot_weighted_total_latency(label_dfs_hash)
 plot_unweighted_group_latency(label_dfs_hash)
 plot_unweighted_query_latency(label_dfs_hash)
 plot_unweighted_upsert_latency(label_dfs_hash, label_grouped_dfs_hash)
