@@ -68,6 +68,16 @@ class Graph:
             "bench_90per_8008326000_first": "開始時実行頻度に対する最適化",
             "bench_90per_8008326000_last": "終了時実行頻度に対する最適化",
 
+            "bench_non_iterative_first": "開始時頻度に対する最適化",
+            "bench_non_iterative_last": "終了時頻度に対する最適化",
+            #"bench_non_iterative_first": "開始時実行頻度に対する最適化",
+            #"bench_non_iterative_last": "終了時実行頻度に対する最適化",
+            #"bench_non_iterative_static": "平均実行頻度に対する最適化",
+          "bench_non_iterative_static": "平均頻度に対する最適化",
+            #"bench_non_iterative_prop": "提案手法 (候補削減無し)" ,
+            #"bench_iterative_prop": "提案手法 (候補削減有り)" ,
+            "bench_iterative_prop": "提案手法",
+
         }
         if legend in convert_hash:
             return convert_hash[legend]
@@ -91,28 +101,36 @@ class Graph:
 
         # fig = pyplot.figure(dpi=300)
         #fig = pyplot.figure(dpi=200, figsize=(80, 60))
-        fig = pyplot.figure(figsize=(8, 5))
+        fig = pyplot.figure(figsize=(8, 4.5))
+        #fig = pyplot.figure(figsize=(8, 4))
         ax = fig.add_subplot(1, 1, 1)
         y_max_lim = 0
+        cmap = pyplot.get_cmap("tab10")
         makers = ["o", "v", "^", "<", ">", "1", "2", "3"]
         for idx, label in enumerate(label_data_hash.keys()):
             if label_data_hash[label] is not None:
-                ax.plot(x, label_data_hash[label], marker=makers[idx], label=Graph.convert_legends(label), linewidth=1.5, markersize=4)
+                if idx == 1:
+                  idx = 2
+                elif idx == 2:
+                  idx = 1
+                ax.plot(x, label_data_hash[label], marker=makers[idx], label=Graph.convert_legends(label), linewidth=1.5, markersize=4,color=cmap(idx) )
                 if y_max_lim < max(label_data_hash[label]):
                     y_max_lim = max(label_data_hash[label])
                 # if label in label_cost_hash:
                 # ax.plot(x, label_cost_hash[label], label=label + "_cost", marker="x")
                 if bool(label_se_hash) and not any([np.isnan(se) for se in label_se_hash[label]]):
                     doubled_se_interval = [se * 2 for se in label_se_hash[label]]
-                    #ax.errorbar(x, label_data_hash[label], doubled_se_interval, fmt='o', capsize=2, ecolor='black', markeredgecolor = "black", color='w')
+                    ax.errorbar(x, label_data_hash[label], doubled_se_interval, fmt='o', capsize=2, ecolor='black', markeredgecolor = "black", color='w')
 
-        pyplot.rcParams["font.size"] = 12
-        pyplot.title(Graph.title_with_newline(title), fontsize=11)
-        pyplot.legend(fontsize=11)
+        pyplot.rcParams["font.size"] = 13
+        pyplot.title(Graph.title_with_newline(title))
+        #pyplot.legend(fontsize=13)
+        pyplot.subplots_adjust(left=0.2, right=0.95, bottom=0.13, top=0.95)
         #x_label = Graph.convert_labels(x_label)
         #y_label = Graph.convert_labels(y_label)
-        pyplot.xlabel(x_label)
-        pyplot.ylabel(y_label)
+        pyplot.xlabel(x_label, fontsize=14)
+        pyplot.ylabel(y_label, fontsize=13)
+        pyplot.tick_params(labelsize=13)
         ax.set_ylim(ymin=0)
         ax.set_ylim(ymax=y_max_lim * 1.1)
         ax.set_xlim(xmin=0)
@@ -358,12 +376,13 @@ def show_total_weighted_latency_diff(label_dfs_hash):
         for label2 in label_total_weighted_avg_hash.keys():
             if label1 == label2:
                 continue
-            print(label1 + " / " + label2)
             label1_total_weighted_latency = sum(label_total_weighted_avg_hash[label1])
             label2_total_weighted_latency = sum(label_total_weighted_avg_hash[label2])
-            print(label1 + ": " + str(label1_total_weighted_latency))
-            print(label2 + ": " + str(label2_total_weighted_latency))
-            print(" " + str(label1_total_weighted_latency / label2_total_weighted_latency))
+            print("  " + label1 + ": " + str(label1_total_weighted_latency))
+            print("  " + label2 + ": " + str(label2_total_weighted_latency))
+            print(label1 + " / " + label2)
+            print(str(label1_total_weighted_latency / label2_total_weighted_latency))
+            print(" " + str((1 - label1_total_weighted_latency / label2_total_weighted_latency) * 100) + "% reduced")
 
 
 def get_total_weighted_avg_hash(label_dfs_hash):
@@ -398,7 +417,8 @@ def plot_weighted_total_latency(label_dfs_hash):
         #"各処理の実行頻度による応答時間の加重平均 [s]",
         "",
         "時刻",
-        "各処理の実行頻度による応答時間の加重平均 [s]",
+        "各処理の応答時間の実行頻度による加重平均 [s]",
+        #"応答時間の実行頻度による加重平均 [s]",
         label_total_weighted_avg_hash, {})
 
 

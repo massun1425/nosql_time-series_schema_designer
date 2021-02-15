@@ -1,0 +1,120 @@
+timestep,label,group,name,weight,mean,cost,standard_error
+0,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.id=? -- 1,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0038918326000000002,0.009220552463838648,0.0009217589328457027
+0,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.firstname = ? -- 0,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0040732413,0.009220552463838648,0.0007019365280049036
+0,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i2906147889","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0158773296,0.13329108,0.0007238200379995968
+0,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i3813239832","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0164810788,0.13329108,0.0008401192175997247
+0,1_5_minimum_995_99_static,Test1,TOTAL,1.0,0.039920247477,,NaN
+0,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.id=? -- 4,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0033854236000000005,0.009220552463838648,0.0007600441463524806
+0,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.name = ? -- 3,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.7625518623999998,0.018441104927677296,0.008277968385194425
+0,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1888493477","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.016286894199999995,0.13329108,0.0007406274533804247
+0,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1661317464","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.015586507100000003,0.13329108,0.0012080868436745251
+0,1_5_minimum_995_99_static,Test2,TOTAL,1.0,0.007978106872999999,,NaN
+0,1_5_minimum_995_99_static,TOTAL,TOTAL,1.0,0.04789835435,,NaN
+timestep,label,group,name,weight,mean,cost,standard_error
+1,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.id=? -- 1,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0027566438,0.009220552463838648,0.00044171513004322887
+1,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.firstname = ? -- 0,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0047461484,0.009220552463838648,0.0020749967256596022
+1,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i2906147889","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.014048730600000003,0.13329108,0.0003263415135470883
+1,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i3813239832","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.014442213,0.13329108,0.0006889281267346476
+1,1_5_minimum_995_99_static,Test1,TOTAL,1.0,0.035633798442,,NaN
+1,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.id=? -- 4,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0020057504,0.009220552463838648,0.0001391514375647545
+1,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.name = ? -- 3,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.7915738622999999,0.018441104927677296,0.02089844429293346
+1,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1888493477","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.013844046799999999,0.13329108,0.0005175945237710435
+1,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1661317464","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0129171952,0.13329108,0.0003172063742959007
+1,1_5_minimum_995_99_static,Test2,TOTAL,1.0,0.008203408547,,NaN
+1,1_5_minimum_995_99_static,TOTAL,TOTAL,1.0,0.043837206989,,NaN
+timestep,label,group,name,weight,mean,cost,standard_error
+2,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.id=? -- 1,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0022342852,0.009220552463838648,0.0001723623205005987
+2,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.firstname = ? -- 0,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0029738667999999998,0.009220552463838648,0.00018238743760320283
+2,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i2906147889","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.015217193300000001,0.13329108,0.00027797190714471076
+2,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i3813239832","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.014314602599999999,0.13329108,0.00037049802147422526
+2,1_5_minimum_995_99_static,Test1,TOTAL,1.0,0.034392548421,,NaN
+2,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.id=? -- 4,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0020194266,0.009220552463838648,0.00017840848120436676
+2,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.name = ? -- 3,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.8214094266,0.018441104927677296,0.028812752850456706
+2,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1888493477","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0143229194,0.13329108,0.0004675108424694958
+2,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1661317464","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.014007684799999998,0.13329108,0.00022140330072420631
+2,1_5_minimum_995_99_static,Test2,TOTAL,1.0,0.008517594574,,NaN
+2,1_5_minimum_995_99_static,TOTAL,TOTAL,1.0,0.042910142995,,NaN
+timestep,label,group,name,weight,mean,cost,standard_error
+3,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.id=? -- 1,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.002059034,0.009220552463838648,0.0001595278669811502
+3,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.firstname = ? -- 0,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0027345980000000004,0.009220552463838648,0.00016930942886049394
+3,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i2906147889","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0143174184,0.13329108,0.00031350470995938093
+3,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i3813239832","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0144905401,0.13329108,0.0003000408044128684
+3,1_5_minimum_995_99_static,Test1,TOTAL,1.0,0.033265574595,,NaN
+3,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.id=? -- 4,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0019674664000000003,0.009220552463838648,0.00016380804051254627
+3,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.name = ? -- 3,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.8428157506,0.018441104927677296,0.036430751387274994
+3,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1888493477","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0148072699,0.13329108,0.00034986867938821634
+3,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1661317464","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.012364782900000001,0.13329108,0.0002719331433148576
+3,1_5_minimum_995_99_static,Test2,TOTAL,1.0,0.008719552698,,NaN
+3,1_5_minimum_995_99_static,TOTAL,TOTAL,1.0,0.041985127292999996,,NaN
+timestep,label,group,name,weight,mean,cost,standard_error
+4,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.id=? -- 1,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0024749914000000003,0.009220552463838648,0.000353976144838955
+4,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.firstname = ? -- 0,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0035069749,0.009220552463838648,0.0002982483740130941
+4,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i2906147889","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.013701417300000001,0.13329108,0.00041709530666599585
+4,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i3813239832","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.013751854499999999,0.13329108,0.0004091796856656077
+4,1_5_minimum_995_99_static,Test1,TOTAL,1.0,0.033100885719,,NaN
+4,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.id=? -- 4,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0020480061000000003,0.009220552463838648,0.0001645886604034062
+4,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.name = ? -- 3,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.8497754568000001,0.018441104927677296,0.03357336548177485
+4,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1888493477","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0147636204,0.13329108,0.0011010697289440664
+4,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1661317464","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.012210511600000001,0.13329108,0.000333235783587444
+4,1_5_minimum_995_99_static,Test2,TOTAL,1.0,0.008787975949000002,,NaN
+4,1_5_minimum_995_99_static,TOTAL,TOTAL,1.0,0.041888861668,,NaN
+timestep,label,group,name,weight,mean,cost,standard_error
+5,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.id=? -- 1,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0024332647,0.009220552463838648,0.00018163295555922358
+5,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.firstname = ? -- 0,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0029974807,0.009220552463838648,0.00016824844517888485
+5,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i2906147889","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.017826175700000002,0.13329108,0.00141661571587912
+5,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i3813239832","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.013196513100000001,0.13329108,0.0002626960224128281
+5,1_5_minimum_995_99_static,Test1,TOTAL,1.0,0.00036453434200000006,,NaN
+5,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.id=? -- 4,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0022692942,0.009220552463838648,0.0001740397477746455
+5,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.name = ? -- 3,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.8605007490000001,0.018441104927677296,0.042862052573319126
+5,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1888493477","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.015012076999999999,0.13329108,0.0004058018817149844
+5,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1661317464","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0130157723,0.13329108,0.00025744443878398523
+5,1_5_minimum_995_99_static,Test2,TOTAL,1.0,0.881889913575,,NaN
+5,1_5_minimum_995_99_static,TOTAL,TOTAL,1.0,0.882254447917,,NaN
+timestep,label,group,name,weight,mean,cost,standard_error
+6,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.id=? -- 1,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0022387508,0.009220552463838648,0.00018627271131756135
+6,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.firstname = ? -- 0,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0032506289,0.009220552463838648,0.00015670560438573627
+6,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i2906147889","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.014804844499999997,0.13329108,0.0002823955641315231
+6,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i3813239832","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0127375082,0.13329108,0.0003207386066615548
+6,1_5_minimum_995_99_static,Test1,TOTAL,1.0,0.000330317324,,NaN
+6,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.id=? -- 4,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0043441677,0.009220552463838648,0.0015871489104109155
+6,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.name = ? -- 3,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.9056971911,0.018441104927677296,0.05416951912375921
+6,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1888493477","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.013575652599999998,0.13329108,0.0004133095208218707
+6,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1661317464","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.012776996500000002,0.13329108,0.0010390010964448095
+6,1_5_minimum_995_99_static,Test2,TOTAL,1.0,0.9270300678210001,,NaN
+6,1_5_minimum_995_99_static,TOTAL,TOTAL,1.0,0.9273603851450001,,NaN
+timestep,label,group,name,weight,mean,cost,standard_error
+7,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.id=? -- 1,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0024225735999999997,0.009220552463838648,0.00036883478774866725
+7,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.firstname = ? -- 0,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0032378713999999995,0.009220552463838648,0.0004015676958394493
+7,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i2906147889","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.014053717500000002,0.13329108,0.0005684615409123557
+7,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i3813239832","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0139086822,0.13329108,0.0004429510165293627
+7,1_5_minimum_995_99_static,Test1,TOTAL,1.0,0.000336228447,,NaN
+7,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.id=? -- 4,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0023339526999999996,0.009220552463838648,0.0004509884872029453
+7,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.name = ? -- 3,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.9224506004000002,0.018441104927677296,0.039336673052503726
+7,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1888493477","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0153779268,0.13329108,0.00030835028929380515
+7,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1661317464","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.013495768699999999,0.13329108,0.00042271785943655537
+7,1_5_minimum_995_99_static,Test2,TOTAL,1.0,0.9441216661140001,,NaN
+7,1_5_minimum_995_99_static,TOTAL,TOTAL,1.0,0.944457894561,,NaN
+timestep,label,group,name,weight,mean,cost,standard_error
+8,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.id=? -- 1,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0023760803,0.009220552463838648,0.00047492469832424884
+8,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.firstname = ? -- 0,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0034850374000000004,0.009220552463838648,0.00036518159848081673
+8,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i2906147889","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.014769569400000002,0.13329108,0.00036953981768711566
+8,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i3813239832","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.015442957899999998,0.13329108,0.0012218849462210194
+8,1_5_minimum_995_99_static,Test1,TOTAL,1.0,0.00036073645,,NaN
+8,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.id=? -- 4,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0025077603000000005,0.009220552463838648,0.00037470863465542724
+8,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.name = ? -- 3,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.9578187362000001,0.018441104927677296,0.06180452022060006
+8,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1888493477","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0155600608,0.13329108,0.00019855629869310775
+8,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1661317464","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.014622363499999999,0.13329108,0.0012426768523144814
+8,1_5_minimum_995_99_static,Test2,TOTAL,1.0,0.9806038315920002,,NaN
+8,1_5_minimum_995_99_static,TOTAL,TOTAL,1.0,0.9809645680420002,,NaN
+timestep,label,group,name,weight,mean,cost,standard_error
+9,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.id=? -- 1,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0025985052,0.009220552463838648,0.0005304387558975179
+9,1_5_minimum_995_99_static,Test1,SELECT users.* FROM users WHERE users.firstname = ? -- 0,"[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.0034729576,0.009220552463838648,0.0004494623914546553
+9,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i2906147889","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.015278252599999997,0.13329108,0.00028133188225167624
+9,1_5_minimum_995_99_static,Test1,"INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 for i3813239832","[0.99, 0.99, 0.99, 0.99, 0.99, 0.01, 0.01, 0.01, 0.01, 0.01]",0.014796291599999997,0.13329108,0.00042847132540645003
+9,1_5_minimum_995_99_static,Test1,TOTAL,1.0,0.0003614600699999999,,NaN
+9,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.id=? -- 4,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0022647674999999997,0.009220552463838648,0.00042687619265781003
+9,1_5_minimum_995_99_static,Test2,SELECT items.* FROM items WHERE items.name = ? -- 3,"[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.9523833640999999,0.018441104927677296,0.048529972865043056
+9,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1888493477","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0165031421,0.13329108,0.0007243683724290109
+9,1_5_minimum_995_99_static,Test2,"INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size for i1661317464","[0.01, 0.01, 0.01, 0.01, 0.01, 0.99, 0.99, 0.99, 0.99, 0.99]",0.0136266854,0.13329108,0.00015169189989457796
+9,1_5_minimum_995_99_static,Test2,TOTAL,1.0,0.974930179509,,NaN
+9,1_5_minimum_995_99_static,TOTAL,TOTAL,1.0,0.975291639579,,NaN

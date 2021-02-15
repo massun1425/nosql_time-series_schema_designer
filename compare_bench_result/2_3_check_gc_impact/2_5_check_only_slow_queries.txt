@@ -1,0 +1,388 @@
+(eval):19: warning: constant ::FALSE is deprecated
+(eval):45: warning: constant ::TRUE is deprecated
+clearing keyspace: tpch
+CREATE COLUMNFAMILY "i2386081023" ("region_r_name" text, "nation_n_name" text, "part_p_type" text, "orders_o_orderdate" timestamp, "region_r_regionkey" uuid, "nation_n_nationkey" uuid, "customer_c_custkey" uuid, "orders_o_orderkey" uuid, "lineitem_l_linenumber" uuid, "partsupp_ps_partkey" uuid, "part_p_partkey" uuid, "lineitem_l_extendedprice" float, "lineitem_l_discount" float, "value_hash" text, PRIMARY KEY(("region_r_name"), "nation_n_name", "part_p_type", "orders_o_orderdate", "region_r_regionkey", "nation_n_nationkey", "customer_c_custkey", "orders_o_orderkey", "lineitem_l_linenumber", "partsupp_ps_partkey", "part_p_partkey", value_hash)) WITH gc_grace_seconds=30;
+CREATE COLUMNFAMILY "i3198637182" ("region_r_name" text, "orders_o_orderdate" timestamp, "customer_c_custkey" uuid, "lineitem_l_linenumber" uuid, "nation_n_nationkey" uuid, "orders_o_orderkey" uuid, "region_r_regionkey" uuid, "nation_n_name" text, "lineitem_l_extendedprice" float, "lineitem_l_discount" float, "value_hash" text, PRIMARY KEY(("region_r_name"), "orders_o_orderdate", "customer_c_custkey", "lineitem_l_linenumber", "nation_n_nationkey", "orders_o_orderkey", "region_r_regionkey", value_hash)) WITH gc_grace_seconds=30;
+CREATE COLUMNFAMILY "i161745760" ("customer_c_mktsegment" text, "lineitem_l_shipdate" timestamp, "customer_c_custkey" uuid, "lineitem_l_linenumber" uuid, "orders_o_orderkey" uuid, "orders_o_orderdate" timestamp, "orders_o_shippriority" int, "lineitem_l_extendedprice" float, "lineitem_l_discount" float, "value_hash" text, PRIMARY KEY(("customer_c_mktsegment"), "lineitem_l_shipdate", "customer_c_custkey", "lineitem_l_linenumber", "orders_o_orderkey", value_hash)) WITH gc_grace_seconds=30;
+ INFO  nose::loader::mysqlloader : i2386081023 [region.r_name] [nation.n_name, part.p_type, orders.o_orderdate, region.r_regionkey, nation.n_nationkey, customer.c_custkey, orders.o_orderkey, lineitem.l_linenumber, partsupp.ps_partkey, part.p_partkey] → [lineitem.l_extendedprice, lineitem.l_discount]  $166 Graph(nodes: part, partsupp, lineitem, orders, customer, nation, region, edges: {part=>#<Set: {part.from_partsupp}>, partsupp=>#<Set: {partsupp.ps_partkey, partsupp.from_lineitem}>, lineitem=>#<Set: {lineitem.l_partkey, lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders, customer.c_nationkey}>, nation=>#<Set: {nation.from_customer, nation.n_regionkey}>, region=>#<Set: {region.from_nation}>})
+ INFO  nose::loader::mysqlloader : i3198637182 [region.r_name] [orders.o_orderdate, customer.c_custkey, lineitem.l_linenumber, nation.n_nationkey, orders.o_orderkey, region.r_regionkey] → [nation.n_name, lineitem.l_extendedprice, lineitem.l_discount]  $124 Graph(nodes: lineitem, orders, customer, nation, region, edges: {lineitem=>#<Set: {lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders, customer.c_nationkey}>, nation=>#<Set: {nation.from_customer, nation.n_regionkey}>, region=>#<Set: {region.from_nation}>})
+ INFO  nose::loader::mysqlloader : i161745760 [customer.c_mktsegment] [lineitem.l_shipdate, customer.c_custkey, lineitem.l_linenumber, orders.o_orderkey] → [orders.o_orderdate, orders.o_shippriority, lineitem.l_extendedprice, lineitem.l_discount]  $98 Graph(nodes: lineitem, orders, customer, edges: {lineitem=>#<Set: {lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders}>})
+SELECT DISTINCT region.r_name AS region_r_name, nation.n_name AS nation_n_name, part.p_type AS part_p_type, orders.o_orderdate AS orders_o_orderdate, region.r_regionkey AS region_r_regionkey, nation.n_nationkey AS nation_n_nationkey, customer.c_custkey AS customer_c_custkey, orders.o_orderkey AS orders_o_orderkey, lineitem.l_linenumber AS lineitem_l_linenumber, partsupp.ps_partkey AS partsupp_ps_partkey, part.p_partkey AS part_p_partkey, lineitem.l_extendedprice AS lineitem_l_extendedprice, lineitem.l_discount AS lineitem_l_discount FROM part JOIN partsupp JOIN lineitem JOIN orders JOIN customer JOIN nation JOIN region WHERE partsupp.ps_partkey=part.p_partkey AND lineitem.l_partkey=partsupp.ps_partkey AND lineitem.l_suppkey=partsupp.ps_suppkey  AND lineitem.l_orderkey=orders.o_orderkey AND orders.o_custkey=customer.c_custkey AND customer.c_nationkey=nation.n_nationkey AND nation.n_regionkey=region.r_regionkey
+SELECT DISTINCT region.r_name AS region_r_name, orders.o_orderdate AS orders_o_orderdate, customer.c_custkey AS customer_c_custkey, lineitem.l_linenumber AS lineitem_l_linenumber, nation.n_nationkey AS nation_n_nationkey, orders.o_orderkey AS orders_o_orderkey, region.r_regionkey AS region_r_regionkey, nation.n_name AS nation_n_name, lineitem.l_extendedprice AS lineitem_l_extendedprice, lineitem.l_discount AS lineitem_l_discount FROM lineitem JOIN orders JOIN customer JOIN nation JOIN region WHERE lineitem.l_orderkey=orders.o_orderkey AND orders.o_custkey=customer.c_custkey AND customer.c_nationkey=nation.n_nationkey AND nation.n_regionkey=region.r_regionkey
+SELECT DISTINCT customer.c_mktsegment AS customer_c_mktsegment, lineitem.l_shipdate AS lineitem_l_shipdate, customer.c_custkey AS customer_c_custkey, lineitem.l_linenumber AS lineitem_l_linenumber, orders.o_orderkey AS orders_o_orderkey, orders.o_orderdate AS orders_o_orderdate, orders.o_shippriority AS orders_o_shippriority, lineitem.l_extendedprice AS lineitem_l_extendedprice, lineitem.l_discount AS lineitem_l_discount FROM lineitem JOIN orders JOIN customer WHERE lineitem.l_orderkey=orders.o_orderkey AND orders.o_custkey=customer.c_custkey
+284.505316261 query for 6001215
+288.01701402 query for 6001215
+321.911497128 query for 6001215
+  insert through csv: i161745760, /tmp/d20210205-11961-5iafq2/i161745760_0.csv, 1000000
+  insert through csv: i161745760, /tmp/d20210205-11963-1nd9hom/i161745760_1.csv, 1000000
+*** Processing i161745760_0.csv
+Lines Processed: 	100000  Rate: 	50000.0 (50000.0)
+*** Processing i161745760_1.csv
+  insert through csv: i161745760, /tmp/d20210205-11962-h1vblh/i161745760_2.csv, 1000000
+Lines Processed: 	200000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	100000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	300000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	200000  Rate: 	50000.0 (50000.0)
+*** Processing i161745760_2.csv
+Lines Processed: 	400000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	300000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	500000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	100000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	400000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	600000  Rate: 	46153.846153846156 (33333.333333333336)
+Lines Processed: 	200000  Rate: 	33333.333333333336 (33333.333333333336)
+Lines Processed: 	500000  Rate: 	45454.545454545456 (33333.333333333336)
+Lines Processed: 	700000  Rate: 	43750.0 (50000.0)
+Lines Processed: 	300000  Rate: 	37500.0 (50000.0)
+Lines Processed: 	600000  Rate: 	42857.142857142855 (50000.0)
+Lines Processed: 	800000  Rate: 	44444.444444444445 (50000.0)
+Lines Processed: 	400000  Rate: 	36363.63636363636 (50000.0)
+Lines Processed: 	700000  Rate: 	41176.470588235294 (50000.0)
+Lines Processed: 	900000  Rate: 	42857.142857142855 (50000.0)
+Lines Processed: 	500000  Rate: 	35714.28571428572 (50000.0)
+Lines Processed: 	800000  Rate: 	42105.26315789474 (50000.0)
+Lines Processed: 	1000000  Rate: 	41666.666666666664 (50000.0)
+Lines Processed: 	600000  Rate: 	37500.0 (50000.0)
+Lines Processed: 	900000  Rate: 	40909.09090909091 (50000.0)
+*** DONE: i161745760_0.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	41666.625
+Lines Processed: 	700000  Rate: 	38888.88888888889 (50000.0)
+Lines Processed: 	1000000  Rate: 	41666.666666666664 (50000.0)
+*** DONE: i161745760_1.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	41666.625
+Lines Processed: 	800000  Rate: 	40000.0 (100000.0)
+Lines Processed: 	900000  Rate: 	40909.09090909091 (100000.0)
+Lines Processed: 	1000000  Rate: 	41666.666666666664 (100000.0)
+*** DONE: i161745760_2.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	41666.625
+  insert through csv: i3198637182, /tmp/d20210205-12492-1w39ook/i3198637182_1.csv, 1000000
+  insert through csv: i3198637182, /tmp/d20210205-12493-14uhbfs/i3198637182_0.csv, 1000000
+  insert through csv: i3198637182, /tmp/d20210205-12491-1k38y4r/i3198637182_2.csv, 1000000
+*** Processing i3198637182_0.csv
+*** Processing i3198637182_1.csv
+*** Processing i3198637182_2.csv
+Lines Processed: 	100000  Rate: 	50000.0 (50000.0)
+  insert through csv: i161745760, /tmp/d20210205-11961-1jjryzh/i161745760_3.csv, 1000000
+Lines Processed: 	100000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	100000  Rate: 	33333.333333333336 (33333.333333333336)
+  insert through csv: i161745760, /tmp/d20210205-11963-1sdu90c/i161745760_4.csv, 1000000
+Lines Processed: 	200000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	200000  Rate: 	50000.0 (50000.0)
+*** Processing i161745760_3.csv
+Lines Processed: 	200000  Rate: 	40000.0 (50000.0)
+Lines Processed: 	300000  Rate: 	42857.142857142855 (50000.0)
+*** Processing i161745760_4.csv
+Lines Processed: 	300000  Rate: 	42857.142857142855 (50000.0)
+Lines Processed: 	100000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	300000  Rate: 	37500.0 (50000.0)
+  insert through csv: i161745760, /tmp/d20210205-11962-1w0i1mw/i161745760_5.csv, 1000000
+Lines Processed: 	400000  Rate: 	44444.444444444445 (50000.0)
+Lines Processed: 	200000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	400000  Rate: 	44444.444444444445 (50000.0)
+Lines Processed: 	100000  Rate: 	33333.333333333336 (33333.333333333336)
+Lines Processed: 	400000  Rate: 	40000.0 (100000.0)
+Lines Processed: 	500000  Rate: 	45454.545454545456 (50000.0)
+Lines Processed: 	300000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	500000  Rate: 	41666.666666666664 (50000.0)
+Lines Processed: 	200000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	500000  Rate: 	41666.666666666664 (50000.0)
+Lines Processed: 	600000  Rate: 	46153.846153846156 (50000.0)
+Lines Processed: 	400000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	600000  Rate: 	42857.142857142855 (50000.0)
+Lines Processed: 	300000  Rate: 	50000.0 (100000.0)
+*** Processing i161745760_5.csv
+Lines Processed: 	600000  Rate: 	42857.142857142855 (50000.0)
+Lines Processed: 	700000  Rate: 	43750.0 (50000.0)
+Lines Processed: 	500000  Rate: 	45454.545454545456 (50000.0)
+Lines Processed: 	700000  Rate: 	43750.0 (50000.0)
+Lines Processed: 	400000  Rate: 	44444.444444444445 (50000.0)
+Lines Processed: 	100000  Rate: 	25000.0 (25000.0)
+Lines Processed: 	700000  Rate: 	41176.470588235294 (50000.0)
+Lines Processed: 	800000  Rate: 	44444.444444444445 (50000.0)
+Lines Processed: 	800000  Rate: 	42105.26315789474 (33333.333333333336)
+Lines Processed: 	600000  Rate: 	42857.142857142855 (33333.333333333336)
+Lines Processed: 	500000  Rate: 	41666.666666666664 (33333.333333333336)
+Lines Processed: 	800000  Rate: 	40000.0 (50000.0)
+Lines Processed: 	200000  Rate: 	28571.428571428572 (33333.333333333336)
+Lines Processed: 	900000  Rate: 	42857.142857142855 (50000.0)
+Lines Processed: 	900000  Rate: 	40909.09090909091 (50000.0)
+Lines Processed: 	700000  Rate: 	38888.88888888889 (33333.333333333336)
+Lines Processed: 	600000  Rate: 	37500.0 (33333.333333333336)
+Lines Processed: 	900000  Rate: 	39130.434782608696 (50000.0)
+Lines Processed: 	1000000  Rate: 	41666.666666666664 (50000.0)
+Lines Processed: 	1000000  Rate: 	41666.666666666664 (50000.0)
+Lines Processed: 	300000  Rate: 	30000.0 (33333.333333333336)
+*** DONE: i3198637182_1.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	38461.5
+*** DONE: i3198637182_0.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	38461.5
+Lines Processed: 	1000000  Rate: 	38461.53846153846 (50000.0)
+Lines Processed: 	800000  Rate: 	38095.23809523809 (33333.333333333336)
+Lines Processed: 	700000  Rate: 	35000.0 (33333.333333333336)
+*** DONE: i3198637182_2.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	38461.5
+Lines Processed: 	400000  Rate: 	28571.428571428572 (33333.333333333336)
+Lines Processed: 	900000  Rate: 	37500.0 (33333.333333333336)
+Lines Processed: 	800000  Rate: 	34782.608695652176 (50000.0)
+Lines Processed: 	500000  Rate: 	29411.764705882353 (50000.0)
+Lines Processed: 	1000000  Rate: 	35714.28571428572 (33333.333333333336)
+Lines Processed: 	900000  Rate: 	34615.38461538462 (33333.333333333336)
+*** DONE: i161745760_3.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	34482.724137931036
+Lines Processed: 	600000  Rate: 	30000.0 (33333.333333333336)
+Lines Processed: 	1000000  Rate: 	35714.28571428572 (100000.0)
+Lines Processed: 	700000  Rate: 	31818.18181818182 (100000.0)
+*** DONE: i161745760_4.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	34482.724137931036
+  insert through csv: i161745760, /tmp/d20210205-11961-148y3xs/i161745760_6.csv, 1215
+Lines Processed: 	800000  Rate: 	34782.608695652176 (100000.0)
+*** Processing i161745760_6.csv
+*** DONE: i161745760_6.csv  number of lines processed: 1216 (1215 inserted)
+Lines Processed: 	1214  Rate: 	0.0
+Lines Processed: 	900000  Rate: 	36000.0 (100000.0)
+Lines Processed: 	1000000  Rate: 	37037.03703703704 (100000.0)
+*** DONE: i161745760_5.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	37037.0
+loading through csv time: 1004.95797807 for 6001215 records on i161745760
+  insert through csv: i3198637182, /tmp/d20210205-12491-1nu0p43/i3198637182_5.csv, 1000000
+  insert through csv: i3198637182, /tmp/d20210205-12492-1f6wjaa/i3198637182_3.csv, 1000000
+*** Processing i3198637182_5.csv
+*** Processing i3198637182_3.csv
+  insert through csv: i3198637182, /tmp/d20210205-12493-9grf9f/i3198637182_4.csv, 1000000
+Lines Processed: 	100000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	100000  Rate: 	33333.333333333336 (33333.333333333336)
+*** Processing i3198637182_4.csv
+Lines Processed: 	200000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	200000  Rate: 	40000.0 (100000.0)
+Lines Processed: 	300000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	100000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	300000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	400000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	200000  Rate: 	40000.0 (50000.0)
+Lines Processed: 	400000  Rate: 	44444.444444444445 (50000.0)
+Lines Processed: 	500000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	300000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	500000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	600000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	400000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	600000  Rate: 	46153.846153846156 (50000.0)
+Lines Processed: 	700000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	500000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	700000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	800000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	600000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	800000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	900000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	700000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	900000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	800000  Rate: 	50000.0 (100000.0)
+Lines Processed: 	1000000  Rate: 	50000.0 (50000.0)
+*** DONE: i3198637182_5.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	49999.95
+Lines Processed: 	1000000  Rate: 	50000.0 (100000.0)
+*** DONE: i3198637182_3.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	49999.95
+Lines Processed: 	900000  Rate: 	50000.0 (100000.0)
+  insert through csv: i3198637182, /tmp/d20210205-12491-zn10vb/i3198637182_6.csv, 1215
+Lines Processed: 	1000000  Rate: 	50000.0 (50000.0)
+*** DONE: i3198637182_4.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	49999.95
+*** Processing i3198637182_6.csv
+*** DONE: i3198637182_6.csv  number of lines processed: 1216 (1215 inserted)
+Lines Processed: 	1214  Rate: 	0.0
+loading through csv time: 1094.0910079 for 6001215 records on i3198637182
+  insert through csv: i2386081023, /tmp/d20210205-15706-1xsi845/i2386081023_1.csv, 1000000
+*** Processing i2386081023_1.csv
+Lines Processed: 	100000  Rate: 	33333.333333333336 (33333.333333333336)
+Lines Processed: 	200000  Rate: 	40000.0 (50000.0)
+Lines Processed: 	300000  Rate: 	37500.0 (50000.0)
+Lines Processed: 	400000  Rate: 	40000.0 (50000.0)
+  insert through csv: i2386081023, /tmp/d20210205-15707-18pzvve/i2386081023_2.csv, 1000000
+  insert through csv: i2386081023, /tmp/d20210205-15705-dxazjo/i2386081023_0.csv, 1000000
+Lines Processed: 	500000  Rate: 	38461.53846153846 (50000.0)
+*** Processing i2386081023_2.csv
+*** Processing i2386081023_0.csv
+Lines Processed: 	600000  Rate: 	40000.0 (50000.0)
+Lines Processed: 	700000  Rate: 	38888.88888888889 (50000.0)
+Lines Processed: 	100000  Rate: 	33333.333333333336 (33333.333333333336)
+Lines Processed: 	100000  Rate: 	25000.0 (25000.0)
+Lines Processed: 	800000  Rate: 	38095.23809523809 (50000.0)
+Lines Processed: 	200000  Rate: 	33333.333333333336 (50000.0)
+Lines Processed: 	200000  Rate: 	33333.333333333336 (50000.0)
+Lines Processed: 	900000  Rate: 	39130.434782608696 (50000.0)
+Lines Processed: 	300000  Rate: 	33333.333333333336 (50000.0)
+Lines Processed: 	300000  Rate: 	33333.333333333336 (50000.0)
+Lines Processed: 	1000000  Rate: 	38461.53846153846 (50000.0)
+*** DONE: i2386081023_1.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	37037.0
+Lines Processed: 	400000  Rate: 	33333.333333333336 (50000.0)
+Lines Processed: 	400000  Rate: 	33333.333333333336 (50000.0)
+Lines Processed: 	500000  Rate: 	35714.28571428572 (50000.0)
+Lines Processed: 	500000  Rate: 	33333.333333333336 (50000.0)
+Lines Processed: 	600000  Rate: 	35294.117647058825 (50000.0)
+Lines Processed: 	600000  Rate: 	35294.117647058825 (50000.0)
+Lines Processed: 	700000  Rate: 	36842.10526315789 (50000.0)
+Lines Processed: 	700000  Rate: 	35000.0 (50000.0)
+Lines Processed: 	800000  Rate: 	36363.63636363636 (50000.0)
+Lines Processed: 	800000  Rate: 	36363.63636363636 (50000.0)
+Lines Processed: 	900000  Rate: 	37500.0 (50000.0)
+Lines Processed: 	900000  Rate: 	36000.0 (50000.0)
+Lines Processed: 	1000000  Rate: 	37037.03703703704 (50000.0)
+*** DONE: i2386081023_0.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	37037.0
+Lines Processed: 	1000000  Rate: 	35714.28571428572 (50000.0)
+*** DONE: i2386081023_2.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	35714.25
+  insert through csv: i2386081023, /tmp/d20210205-15706-vorx9z/i2386081023_3.csv, 1000000
+  insert through csv: i2386081023, /tmp/d20210205-15705-8bq38o/i2386081023_4.csv, 1000000
+*** Processing i2386081023_3.csv
+*** Processing i2386081023_4.csv
+Lines Processed: 	100000  Rate: 	33333.333333333336 (33333.333333333336)
+Lines Processed: 	100000  Rate: 	33333.333333333336 (33333.333333333336)
+Lines Processed: 	200000  Rate: 	33333.333333333336 (50000.0)
+Lines Processed: 	200000  Rate: 	33333.333333333336 (50000.0)
+Lines Processed: 	300000  Rate: 	37500.0 (50000.0)
+Lines Processed: 	300000  Rate: 	33333.333333333336 (50000.0)
+Lines Processed: 	400000  Rate: 	36363.63636363636 (50000.0)
+Lines Processed: 	400000  Rate: 	36363.63636363636 (50000.0)
+Lines Processed: 	500000  Rate: 	35714.28571428572 (50000.0)
+Lines Processed: 	500000  Rate: 	35714.28571428572 (50000.0)
+Lines Processed: 	600000  Rate: 	37500.0 (50000.0)
+Lines Processed: 	600000  Rate: 	37500.0 (50000.0)
+Lines Processed: 	700000  Rate: 	36842.10526315789 (50000.0)
+Lines Processed: 	700000  Rate: 	36842.10526315789 (50000.0)
+Lines Processed: 	800000  Rate: 	36363.63636363636 (50000.0)
+Lines Processed: 	800000  Rate: 	36363.63636363636 (50000.0)
+Lines Processed: 	900000  Rate: 	37500.0 (50000.0)
+Lines Processed: 	900000  Rate: 	36000.0 (50000.0)
+Lines Processed: 	1000000  Rate: 	37037.03703703704 (50000.0)
+Lines Processed: 	1000000  Rate: 	37037.03703703704 (50000.0)
+*** DONE: i2386081023_4.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	37037.0
+*** DONE: i2386081023_3.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	35714.25
+  insert through csv: i2386081023, /tmp/d20210205-15705-18ji0pg/i2386081023_6.csv, 1215
+  insert through csv: i2386081023, /tmp/d20210205-15707-1424w6h/i2386081023_5.csv, 1000000
+*** Processing i2386081023_6.csv
+*** DONE: i2386081023_6.csv  number of lines processed: 1216 (1215 inserted)
+Lines Processed: 	1214  Rate: 	0.0
+*** Processing i2386081023_5.csv
+Lines Processed: 	100000  Rate: 	33333.333333333336 (33333.333333333336)
+Lines Processed: 	200000  Rate: 	40000.0 (50000.0)
+Lines Processed: 	300000  Rate: 	37500.0 (50000.0)
+Lines Processed: 	400000  Rate: 	36363.63636363636 (50000.0)
+Lines Processed: 	500000  Rate: 	38461.53846153846 (50000.0)
+Lines Processed: 	600000  Rate: 	37500.0 (50000.0)
+Lines Processed: 	700000  Rate: 	38888.88888888889 (50000.0)
+Lines Processed: 	800000  Rate: 	38095.23809523809 (50000.0)
+Lines Processed: 	900000  Rate: 	39130.434782608696 (50000.0)
+Lines Processed: 	1000000  Rate: 	38461.53846153846 (50000.0)
+*** DONE: i2386081023_5.csv  number of lines processed: 1000001 (1000000 inserted)
+Lines Processed: 	999999  Rate: 	38461.5
+loading through csv time: 1452.451133827 for 6001215 records on i2386081023
+whole loading time: 1788.576862703
+[33m timestep: 0 ===================================================== [0m
+collect index_values for Query
+sleep 2min between query measure
+Executing Query: SELECT l_orderkey.o_orderdate, sum(from_lineitem.l_extendedprice), sum(from_lineitem.l_discount) FROM part.from_partsupp.from_lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE c_nationkey.n_name = ? AND n_regionkey.r_name = ? AND part.p_type = ? AND l_orderkey.o_orderdate < ? ORDER BY l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderdate -- Q8
+    Executing Plan: [Index lookup i2386081023 [region.r_name] [nation.n_name, part.p_type, orders.o_orderdate, region.r_regionkey, nation.n_nationkey, customer.c_custkey, orders.o_orderkey, lineitem.l_linenumber, partsupp.ps_partkey, part.p_partkey] \u2192 [lineitem.l_extendedprice, lineitem.l_discount]  $166 Graph(nodes: part, partsupp, lineitem, orders, customer, nation, region, edges: {part=>#<Set: {part.from_partsupp}>, partsupp=>#<Set: {partsupp.ps_partkey, partsupp.from_lineitem}>, lineitem=>#<Set: {lineitem.l_partkey, lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders, customer.c_nationkey}>, nation=>#<Set: {nation.from_customer, nation.n_regionkey}>, region=>#<Set: {region.from_nation}>}) * 32.0/1 , Aggregation COUNT([]) SUM([lineitem.l_extendedprice, lineitem.l_discount]) AVG([]) MAX([]) GROUP BY([orders.o_orderdate])]
+start benchmarking Query
+sleep 2min between query measure
+Executing Query: SELECT l_orderkey.o_orderkey, sum(lineitem.l_extendedprice), sum(lineitem.l_discount), l_orderkey.o_orderdate, l_orderkey.o_shippriority FROM lineitem.l_orderkey.o_custkey WHERE o_custkey.c_mktsegment = ? AND lineitem.l_shipdate > ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount, l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderkey, l_orderkey.o_orderdate, l_orderkey.o_shippriority -- Q3
+    Executing Plan: [Index lookup i161745760 [customer.c_mktsegment] [lineitem.l_shipdate, customer.c_custkey, lineitem.l_linenumber, orders.o_orderkey] \u2192 [orders.o_orderdate, orders.o_shippriority, lineitem.l_extendedprice, lineitem.l_discount]  $98 Graph(nodes: lineitem, orders, customer, edges: {lineitem=>#<Set: {lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders}>}) * 120000.0/1 , Sort [lineitem.l_extendedprice, lineitem.l_discount, orders.o_orderdate], Aggregation COUNT([]) SUM([lineitem.l_extendedprice, lineitem.l_discount]) AVG([]) MAX([]) GROUP BY([orders.o_orderkey, orders.o_orderdate, orders.o_shippriority])]
+start benchmarking Query
+sleep 2min between query measure
+Executing Query: SELECT c_nationkey.n_name, sum(lineitem.l_extendedprice), sum(lineitem.l_discount) FROM lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE n_regionkey.r_name = ? AND l_orderkey.o_orderdate < ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount GROUP BY c_nationkey.n_name -- Q5
+    Executing Plan: [Index lookup i3198637182 [region.r_name] [orders.o_orderdate, customer.c_custkey, lineitem.l_linenumber, nation.n_nationkey, orders.o_orderkey, region.r_regionkey] \u2192 [nation.n_name, lineitem.l_extendedprice, lineitem.l_discount]  $124 Graph(nodes: lineitem, orders, customer, nation, region, edges: {lineitem=>#<Set: {lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders, customer.c_nationkey}>, nation=>#<Set: {nation.from_customer, nation.n_regionkey}>, region=>#<Set: {region.from_nation}>}) * 120000.0/1 , Sort [lineitem.l_extendedprice, lineitem.l_discount], Aggregation COUNT([]) SUM([lineitem.l_extendedprice, lineitem.l_discount]) AVG([]) MAX([]) GROUP BY([nation.n_name])]
+start benchmarking Query
+cleanup
+[33m timestep: 1 ===================================================== [0m
+timestep,label,group,name,weight,mean,cost,standard_error
+0,2_5_check_slow_queries,Even,"SELECT l_orderkey.o_orderdate, sum(from_lineitem.l_extendedprice), sum(from_lineitem.l_discount) FROM part.from_partsupp.from_lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE c_nationkey.n_name = ? AND n_regionkey.r_name = ? AND part.p_type = ? AND l_orderkey.o_orderdate < ? ORDER BY l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderdate -- Q8","[0.9990000000000001, 0.9990000000000001, 0.001, 0.001, 0.001]",0.060304069050000006,0.009983415982836785,0.009363750600850833
+0,2_5_check_slow_queries,Even,"SELECT l_orderkey.o_orderkey, sum(lineitem.l_extendedprice), sum(lineitem.l_discount), l_orderkey.o_orderdate, l_orderkey.o_shippriority FROM lineitem.l_orderkey.o_custkey WHERE o_custkey.c_mktsegment = ? AND lineitem.l_shipdate > ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount, l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderkey, l_orderkey.o_orderdate, l_orderkey.o_shippriority -- Q3","[0.9990000000000001, 0.9990000000000001, 0.001, 0.001, 0.001]",75.6858931687,2.414998959137952,0.6867373538936975
+0,2_5_check_slow_queries,Even,"SELECT c_nationkey.n_name, sum(lineitem.l_extendedprice), sum(lineitem.l_discount) FROM lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE n_regionkey.r_name = ? AND l_orderkey.o_orderdate < ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount GROUP BY c_nationkey.n_name -- Q5","[0.9990000000000001, 0.9990000000000001, 0.001, 0.001, 0.001]",0.12279029059999998,2.414732376977952,0.010463338928433954
+0,2_5_check_slow_queries,Even,TOTAL,1.0,75.79311854082167,,NaN
+0,2_5_check_slow_queries,TOTAL,TOTAL,1.0,75.79311854082167,,NaN
+collect index_values for Query
+sleep 2min between query measure
+Executing Query: SELECT l_orderkey.o_orderdate, sum(from_lineitem.l_extendedprice), sum(from_lineitem.l_discount) FROM part.from_partsupp.from_lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE c_nationkey.n_name = ? AND n_regionkey.r_name = ? AND part.p_type = ? AND l_orderkey.o_orderdate < ? ORDER BY l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderdate -- Q8
+    Executing Plan: [Index lookup i2386081023 [region.r_name] [nation.n_name, part.p_type, orders.o_orderdate, region.r_regionkey, nation.n_nationkey, customer.c_custkey, orders.o_orderkey, lineitem.l_linenumber, partsupp.ps_partkey, part.p_partkey] \u2192 [lineitem.l_extendedprice, lineitem.l_discount]  $166 Graph(nodes: part, partsupp, lineitem, orders, customer, nation, region, edges: {part=>#<Set: {part.from_partsupp}>, partsupp=>#<Set: {partsupp.ps_partkey, partsupp.from_lineitem}>, lineitem=>#<Set: {lineitem.l_partkey, lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders, customer.c_nationkey}>, nation=>#<Set: {nation.from_customer, nation.n_regionkey}>, region=>#<Set: {region.from_nation}>}) * 32.0/1 , Aggregation COUNT([]) SUM([lineitem.l_extendedprice, lineitem.l_discount]) AVG([]) MAX([]) GROUP BY([orders.o_orderdate])]
+start benchmarking Query
+sleep 2min between query measure
+Executing Query: SELECT l_orderkey.o_orderkey, sum(lineitem.l_extendedprice), sum(lineitem.l_discount), l_orderkey.o_orderdate, l_orderkey.o_shippriority FROM lineitem.l_orderkey.o_custkey WHERE o_custkey.c_mktsegment = ? AND lineitem.l_shipdate > ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount, l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderkey, l_orderkey.o_orderdate, l_orderkey.o_shippriority -- Q3
+    Executing Plan: [Index lookup i161745760 [customer.c_mktsegment] [lineitem.l_shipdate, customer.c_custkey, lineitem.l_linenumber, orders.o_orderkey] \u2192 [orders.o_orderdate, orders.o_shippriority, lineitem.l_extendedprice, lineitem.l_discount]  $98 Graph(nodes: lineitem, orders, customer, edges: {lineitem=>#<Set: {lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders}>}) * 120000.0/1 , Sort [lineitem.l_extendedprice, lineitem.l_discount, orders.o_orderdate], Aggregation COUNT([]) SUM([lineitem.l_extendedprice, lineitem.l_discount]) AVG([]) MAX([]) GROUP BY([orders.o_orderkey, orders.o_orderdate, orders.o_shippriority])]
+start benchmarking Query
+sleep 2min between query measure
+Executing Query: SELECT c_nationkey.n_name, sum(lineitem.l_extendedprice), sum(lineitem.l_discount) FROM lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE n_regionkey.r_name = ? AND l_orderkey.o_orderdate < ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount GROUP BY c_nationkey.n_name -- Q5
+    Executing Plan: [Index lookup i3198637182 [region.r_name] [orders.o_orderdate, customer.c_custkey, lineitem.l_linenumber, nation.n_nationkey, orders.o_orderkey, region.r_regionkey] \u2192 [nation.n_name, lineitem.l_extendedprice, lineitem.l_discount]  $124 Graph(nodes: lineitem, orders, customer, nation, region, edges: {lineitem=>#<Set: {lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders, customer.c_nationkey}>, nation=>#<Set: {nation.from_customer, nation.n_regionkey}>, region=>#<Set: {region.from_nation}>}) * 120000.0/1 , Sort [lineitem.l_extendedprice, lineitem.l_discount], Aggregation COUNT([]) SUM([lineitem.l_extendedprice, lineitem.l_discount]) AVG([]) MAX([]) GROUP BY([nation.n_name])]
+start benchmarking Query
+cleanup
+[33m timestep: 2 ===================================================== [0m
+timestep,label,group,name,weight,mean,cost,standard_error
+1,2_5_check_slow_queries,Even,"SELECT l_orderkey.o_orderdate, sum(from_lineitem.l_extendedprice), sum(from_lineitem.l_discount) FROM part.from_partsupp.from_lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE c_nationkey.n_name = ? AND n_regionkey.r_name = ? AND part.p_type = ? AND l_orderkey.o_orderdate < ? ORDER BY l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderdate -- Q8","[0.9990000000000001, 0.9990000000000001, 0.001, 0.001, 0.001]",0.0449618872,0.009983415982836785,0.009203575609397842
+1,2_5_check_slow_queries,Even,"SELECT l_orderkey.o_orderkey, sum(lineitem.l_extendedprice), sum(lineitem.l_discount), l_orderkey.o_orderdate, l_orderkey.o_shippriority FROM lineitem.l_orderkey.o_custkey WHERE o_custkey.c_mktsegment = ? AND lineitem.l_shipdate > ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount, l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderkey, l_orderkey.o_orderdate, l_orderkey.o_shippriority -- Q3","[0.9990000000000001, 0.9990000000000001, 0.001, 0.001, 0.001]",76.15085176325002,2.414998959137952,0.40727855116234013
+1,2_5_check_slow_queries,Even,"SELECT c_nationkey.n_name, sum(lineitem.l_extendedprice), sum(lineitem.l_discount) FROM lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE n_regionkey.r_name = ? AND l_orderkey.o_orderdate < ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount GROUP BY c_nationkey.n_name -- Q5","[0.9990000000000001, 0.9990000000000001, 0.001, 0.001, 0.001]",0.10348068285,2.414732376977952,0.016460250986823136
+1,2_5_check_slow_queries,Even,TOTAL,1.0,76.22299503896673,,NaN
+1,2_5_check_slow_queries,TOTAL,TOTAL,1.0,76.22299503896673,,NaN
+collect index_values for Query
+sleep 2min between query measure
+Executing Query: SELECT l_orderkey.o_orderdate, sum(from_lineitem.l_extendedprice), sum(from_lineitem.l_discount) FROM part.from_partsupp.from_lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE c_nationkey.n_name = ? AND n_regionkey.r_name = ? AND part.p_type = ? AND l_orderkey.o_orderdate < ? ORDER BY l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderdate -- Q8
+    Executing Plan: [Index lookup i2386081023 [region.r_name] [nation.n_name, part.p_type, orders.o_orderdate, region.r_regionkey, nation.n_nationkey, customer.c_custkey, orders.o_orderkey, lineitem.l_linenumber, partsupp.ps_partkey, part.p_partkey] \u2192 [lineitem.l_extendedprice, lineitem.l_discount]  $166 Graph(nodes: part, partsupp, lineitem, orders, customer, nation, region, edges: {part=>#<Set: {part.from_partsupp}>, partsupp=>#<Set: {partsupp.ps_partkey, partsupp.from_lineitem}>, lineitem=>#<Set: {lineitem.l_partkey, lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders, customer.c_nationkey}>, nation=>#<Set: {nation.from_customer, nation.n_regionkey}>, region=>#<Set: {region.from_nation}>}) * 32.0/1 , Aggregation COUNT([]) SUM([lineitem.l_extendedprice, lineitem.l_discount]) AVG([]) MAX([]) GROUP BY([orders.o_orderdate])]
+start benchmarking Query
+sleep 2min between query measure
+Executing Query: SELECT l_orderkey.o_orderkey, sum(lineitem.l_extendedprice), sum(lineitem.l_discount), l_orderkey.o_orderdate, l_orderkey.o_shippriority FROM lineitem.l_orderkey.o_custkey WHERE o_custkey.c_mktsegment = ? AND lineitem.l_shipdate > ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount, l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderkey, l_orderkey.o_orderdate, l_orderkey.o_shippriority -- Q3
+    Executing Plan: [Index lookup i161745760 [customer.c_mktsegment] [lineitem.l_shipdate, customer.c_custkey, lineitem.l_linenumber, orders.o_orderkey] \u2192 [orders.o_orderdate, orders.o_shippriority, lineitem.l_extendedprice, lineitem.l_discount]  $98 Graph(nodes: lineitem, orders, customer, edges: {lineitem=>#<Set: {lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders}>}) * 120000.0/1 , Sort [lineitem.l_extendedprice, lineitem.l_discount, orders.o_orderdate], Aggregation COUNT([]) SUM([lineitem.l_extendedprice, lineitem.l_discount]) AVG([]) MAX([]) GROUP BY([orders.o_orderkey, orders.o_orderdate, orders.o_shippriority])]
+start benchmarking Query
+sleep 2min between query measure
+Executing Query: SELECT c_nationkey.n_name, sum(lineitem.l_extendedprice), sum(lineitem.l_discount) FROM lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE n_regionkey.r_name = ? AND l_orderkey.o_orderdate < ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount GROUP BY c_nationkey.n_name -- Q5
+    Executing Plan: [Index lookup i3198637182 [region.r_name] [orders.o_orderdate, customer.c_custkey, lineitem.l_linenumber, nation.n_nationkey, orders.o_orderkey, region.r_regionkey] \u2192 [nation.n_name, lineitem.l_extendedprice, lineitem.l_discount]  $124 Graph(nodes: lineitem, orders, customer, nation, region, edges: {lineitem=>#<Set: {lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders, customer.c_nationkey}>, nation=>#<Set: {nation.from_customer, nation.n_regionkey}>, region=>#<Set: {region.from_nation}>}) * 120000.0/1 , Sort [lineitem.l_extendedprice, lineitem.l_discount], Aggregation COUNT([]) SUM([lineitem.l_extendedprice, lineitem.l_discount]) AVG([]) MAX([]) GROUP BY([nation.n_name])]
+start benchmarking Query
+cleanup
+[33m timestep: 3 ===================================================== [0m
+timestep,label,group,name,weight,mean,cost,standard_error
+2,2_5_check_slow_queries,Even,"SELECT l_orderkey.o_orderdate, sum(from_lineitem.l_extendedprice), sum(from_lineitem.l_discount) FROM part.from_partsupp.from_lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE c_nationkey.n_name = ? AND n_regionkey.r_name = ? AND part.p_type = ? AND l_orderkey.o_orderdate < ? ORDER BY l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderdate -- Q8","[0.9990000000000001, 0.9990000000000001, 0.001, 0.001, 0.001]",0.056001361900000005,0.009983415982836785,0.006161848137865516
+2,2_5_check_slow_queries,Even,"SELECT l_orderkey.o_orderkey, sum(lineitem.l_extendedprice), sum(lineitem.l_discount), l_orderkey.o_orderdate, l_orderkey.o_shippriority FROM lineitem.l_orderkey.o_custkey WHERE o_custkey.c_mktsegment = ? AND lineitem.l_shipdate > ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount, l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderkey, l_orderkey.o_orderdate, l_orderkey.o_shippriority -- Q3","[0.9990000000000001, 0.9990000000000001, 0.001, 0.001, 0.001]",78.94739082445,2.414998959137952,0.806076383984211
+2,2_5_check_slow_queries,Even,"SELECT c_nationkey.n_name, sum(lineitem.l_extendedprice), sum(lineitem.l_discount) FROM lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE n_regionkey.r_name = ? AND l_orderkey.o_orderdate < ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount GROUP BY c_nationkey.n_name -- Q5","[0.9990000000000001, 0.9990000000000001, 0.001, 0.001, 0.001]",0.11767415749999999,2.414732376977952,0.018093632365772258
+2,2_5_check_slow_queries,Even,TOTAL,1.0,0.07912106634385,,NaN
+2,2_5_check_slow_queries,TOTAL,TOTAL,1.0,0.07912106634385,,NaN
+collect index_values for Query
+sleep 2min between query measure
+Executing Query: SELECT l_orderkey.o_orderdate, sum(from_lineitem.l_extendedprice), sum(from_lineitem.l_discount) FROM part.from_partsupp.from_lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE c_nationkey.n_name = ? AND n_regionkey.r_name = ? AND part.p_type = ? AND l_orderkey.o_orderdate < ? ORDER BY l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderdate -- Q8
+    Executing Plan: [Index lookup i2386081023 [region.r_name] [nation.n_name, part.p_type, orders.o_orderdate, region.r_regionkey, nation.n_nationkey, customer.c_custkey, orders.o_orderkey, lineitem.l_linenumber, partsupp.ps_partkey, part.p_partkey] \u2192 [lineitem.l_extendedprice, lineitem.l_discount]  $166 Graph(nodes: part, partsupp, lineitem, orders, customer, nation, region, edges: {part=>#<Set: {part.from_partsupp}>, partsupp=>#<Set: {partsupp.ps_partkey, partsupp.from_lineitem}>, lineitem=>#<Set: {lineitem.l_partkey, lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders, customer.c_nationkey}>, nation=>#<Set: {nation.from_customer, nation.n_regionkey}>, region=>#<Set: {region.from_nation}>}) * 32.0/1 , Aggregation COUNT([]) SUM([lineitem.l_extendedprice, lineitem.l_discount]) AVG([]) MAX([]) GROUP BY([orders.o_orderdate])]
+start benchmarking Query
+sleep 2min between query measure
+Executing Query: SELECT l_orderkey.o_orderkey, sum(lineitem.l_extendedprice), sum(lineitem.l_discount), l_orderkey.o_orderdate, l_orderkey.o_shippriority FROM lineitem.l_orderkey.o_custkey WHERE o_custkey.c_mktsegment = ? AND lineitem.l_shipdate > ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount, l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderkey, l_orderkey.o_orderdate, l_orderkey.o_shippriority -- Q3
+    Executing Plan: [Index lookup i161745760 [customer.c_mktsegment] [lineitem.l_shipdate, customer.c_custkey, lineitem.l_linenumber, orders.o_orderkey] \u2192 [orders.o_orderdate, orders.o_shippriority, lineitem.l_extendedprice, lineitem.l_discount]  $98 Graph(nodes: lineitem, orders, customer, edges: {lineitem=>#<Set: {lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders}>}) * 120000.0/1 , Sort [lineitem.l_extendedprice, lineitem.l_discount, orders.o_orderdate], Aggregation COUNT([]) SUM([lineitem.l_extendedprice, lineitem.l_discount]) AVG([]) MAX([]) GROUP BY([orders.o_orderkey, orders.o_orderdate, orders.o_shippriority])]
+start benchmarking Query
+sleep 2min between query measure
+Executing Query: SELECT c_nationkey.n_name, sum(lineitem.l_extendedprice), sum(lineitem.l_discount) FROM lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE n_regionkey.r_name = ? AND l_orderkey.o_orderdate < ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount GROUP BY c_nationkey.n_name -- Q5
+    Executing Plan: [Index lookup i3198637182 [region.r_name] [orders.o_orderdate, customer.c_custkey, lineitem.l_linenumber, nation.n_nationkey, orders.o_orderkey, region.r_regionkey] \u2192 [nation.n_name, lineitem.l_extendedprice, lineitem.l_discount]  $124 Graph(nodes: lineitem, orders, customer, nation, region, edges: {lineitem=>#<Set: {lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders, customer.c_nationkey}>, nation=>#<Set: {nation.from_customer, nation.n_regionkey}>, region=>#<Set: {region.from_nation}>}) * 120000.0/1 , Sort [lineitem.l_extendedprice, lineitem.l_discount], Aggregation COUNT([]) SUM([lineitem.l_extendedprice, lineitem.l_discount]) AVG([]) MAX([]) GROUP BY([nation.n_name])]
+start benchmarking Query
+cleanup
+[33m timestep: 4 ===================================================== [0m
+timestep,label,group,name,weight,mean,cost,standard_error
+3,2_5_check_slow_queries,Even,"SELECT l_orderkey.o_orderdate, sum(from_lineitem.l_extendedprice), sum(from_lineitem.l_discount) FROM part.from_partsupp.from_lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE c_nationkey.n_name = ? AND n_regionkey.r_name = ? AND part.p_type = ? AND l_orderkey.o_orderdate < ? ORDER BY l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderdate -- Q8","[0.9990000000000001, 0.9990000000000001, 0.001, 0.001, 0.001]",0.048066969550000005,0.009983415982836785,0.004537909981817381
+3,2_5_check_slow_queries,Even,"SELECT l_orderkey.o_orderkey, sum(lineitem.l_extendedprice), sum(lineitem.l_discount), l_orderkey.o_orderdate, l_orderkey.o_shippriority FROM lineitem.l_orderkey.o_custkey WHERE o_custkey.c_mktsegment = ? AND lineitem.l_shipdate > ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount, l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderkey, l_orderkey.o_orderdate, l_orderkey.o_shippriority -- Q3","[0.9990000000000001, 0.9990000000000001, 0.001, 0.001, 0.001]",77.39188670805,2.414998959137952,0.5031507307129268
+3,2_5_check_slow_queries,Even,"SELECT c_nationkey.n_name, sum(lineitem.l_extendedprice), sum(lineitem.l_discount) FROM lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE n_regionkey.r_name = ? AND l_orderkey.o_orderdate < ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount GROUP BY c_nationkey.n_name -- Q5","[0.9990000000000001, 0.9990000000000001, 0.001, 0.001, 0.001]",0.13630324855,2.414732376977952,0.022029436979849232
+3,2_5_check_slow_queries,Even,TOTAL,1.0,0.07757625692615,,NaN
+3,2_5_check_slow_queries,TOTAL,TOTAL,1.0,0.07757625692615,,NaN
+collect index_values for Query
+sleep 2min between query measure
+Executing Query: SELECT l_orderkey.o_orderdate, sum(from_lineitem.l_extendedprice), sum(from_lineitem.l_discount) FROM part.from_partsupp.from_lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE c_nationkey.n_name = ? AND n_regionkey.r_name = ? AND part.p_type = ? AND l_orderkey.o_orderdate < ? ORDER BY l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderdate -- Q8
+    Executing Plan: [Index lookup i2386081023 [region.r_name] [nation.n_name, part.p_type, orders.o_orderdate, region.r_regionkey, nation.n_nationkey, customer.c_custkey, orders.o_orderkey, lineitem.l_linenumber, partsupp.ps_partkey, part.p_partkey] \u2192 [lineitem.l_extendedprice, lineitem.l_discount]  $166 Graph(nodes: part, partsupp, lineitem, orders, customer, nation, region, edges: {part=>#<Set: {part.from_partsupp}>, partsupp=>#<Set: {partsupp.ps_partkey, partsupp.from_lineitem}>, lineitem=>#<Set: {lineitem.l_partkey, lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders, customer.c_nationkey}>, nation=>#<Set: {nation.from_customer, nation.n_regionkey}>, region=>#<Set: {region.from_nation}>}) * 32.0/1 , Aggregation COUNT([]) SUM([lineitem.l_extendedprice, lineitem.l_discount]) AVG([]) MAX([]) GROUP BY([orders.o_orderdate])]
+start benchmarking Query
+sleep 2min between query measure
+Executing Query: SELECT l_orderkey.o_orderkey, sum(lineitem.l_extendedprice), sum(lineitem.l_discount), l_orderkey.o_orderdate, l_orderkey.o_shippriority FROM lineitem.l_orderkey.o_custkey WHERE o_custkey.c_mktsegment = ? AND lineitem.l_shipdate > ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount, l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderkey, l_orderkey.o_orderdate, l_orderkey.o_shippriority -- Q3
+    Executing Plan: [Index lookup i161745760 [customer.c_mktsegment] [lineitem.l_shipdate, customer.c_custkey, lineitem.l_linenumber, orders.o_orderkey] \u2192 [orders.o_orderdate, orders.o_shippriority, lineitem.l_extendedprice, lineitem.l_discount]  $98 Graph(nodes: lineitem, orders, customer, edges: {lineitem=>#<Set: {lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders}>}) * 120000.0/1 , Sort [lineitem.l_extendedprice, lineitem.l_discount, orders.o_orderdate], Aggregation COUNT([]) SUM([lineitem.l_extendedprice, lineitem.l_discount]) AVG([]) MAX([]) GROUP BY([orders.o_orderkey, orders.o_orderdate, orders.o_shippriority])]
+start benchmarking Query
+sleep 2min between query measure
+Executing Query: SELECT c_nationkey.n_name, sum(lineitem.l_extendedprice), sum(lineitem.l_discount) FROM lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE n_regionkey.r_name = ? AND l_orderkey.o_orderdate < ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount GROUP BY c_nationkey.n_name -- Q5
+    Executing Plan: [Index lookup i3198637182 [region.r_name] [orders.o_orderdate, customer.c_custkey, lineitem.l_linenumber, nation.n_nationkey, orders.o_orderkey, region.r_regionkey] \u2192 [nation.n_name, lineitem.l_extendedprice, lineitem.l_discount]  $124 Graph(nodes: lineitem, orders, customer, nation, region, edges: {lineitem=>#<Set: {lineitem.l_orderkey}>, orders=>#<Set: {orders.from_lineitem, orders.o_custkey}>, customer=>#<Set: {customer.from_orders, customer.c_nationkey}>, nation=>#<Set: {nation.from_customer, nation.n_regionkey}>, region=>#<Set: {region.from_nation}>}) * 120000.0/1 , Sort [lineitem.l_extendedprice, lineitem.l_discount], Aggregation COUNT([]) SUM([lineitem.l_extendedprice, lineitem.l_discount]) AVG([]) MAX([]) GROUP BY([nation.n_name])]
+start benchmarking Query
+cleanup
+timestep,label,group,name,weight,mean,cost,standard_error
+4,2_5_check_slow_queries,Even,"SELECT l_orderkey.o_orderdate, sum(from_lineitem.l_extendedprice), sum(from_lineitem.l_discount) FROM part.from_partsupp.from_lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE c_nationkey.n_name = ? AND n_regionkey.r_name = ? AND part.p_type = ? AND l_orderkey.o_orderdate < ? ORDER BY l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderdate -- Q8","[0.9990000000000001, 0.9990000000000001, 0.001, 0.001, 0.001]",0.05952824459999999,0.009983415982836785,0.004518112847487781
+4,2_5_check_slow_queries,Even,"SELECT l_orderkey.o_orderkey, sum(lineitem.l_extendedprice), sum(lineitem.l_discount), l_orderkey.o_orderdate, l_orderkey.o_shippriority FROM lineitem.l_orderkey.o_custkey WHERE o_custkey.c_mktsegment = ? AND lineitem.l_shipdate > ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount, l_orderkey.o_orderdate GROUP BY l_orderkey.o_orderkey, l_orderkey.o_orderdate, l_orderkey.o_shippriority -- Q3","[0.9990000000000001, 0.9990000000000001, 0.001, 0.001, 0.001]",77.54544525320001,2.414998959137952,0.471626368674513
+4,2_5_check_slow_queries,Even,"SELECT c_nationkey.n_name, sum(lineitem.l_extendedprice), sum(lineitem.l_discount) FROM lineitem.l_orderkey.o_custkey.c_nationkey.n_regionkey WHERE n_regionkey.r_name = ? AND l_orderkey.o_orderdate < ? ORDER BY lineitem.l_extendedprice, lineitem.l_discount GROUP BY c_nationkey.n_name -- Q5","[0.9990000000000001, 0.9990000000000001, 0.001, 0.001, 0.001]",0.11763965844999998,2.414732376977952,0.012221782239125123
+4,2_5_check_slow_queries,Even,TOTAL,1.0,0.07772261315625002,,NaN
+4,2_5_check_slow_queries,TOTAL,TOTAL,1.0,0.07772261315625002,,NaN

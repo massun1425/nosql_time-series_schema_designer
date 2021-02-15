@@ -1,0 +1,582 @@
+(eval):19: warning: constant ::FALSE is deprecated
+(eval):45: warning: constant ::TRUE is deprecated
+clearing keyspace: rubis
+CREATE COLUMNFAMILY "i2906147889" ("users_id" uuid, "users_firstname" text, "users_lastname" text, "users_nickname" text, "users_password" text, "users_email" text, "users_rating" int, "users_balance" float, "users_creation_date" timestamp, "value_hash" text, PRIMARY KEY(("users_id"), value_hash));
+CREATE COLUMNFAMILY "i3813239832" ("users_firstname" text, "users_id" uuid, "users_lastname" text, "users_nickname" text, "users_password" text, "users_email" text, "users_rating" int, "users_balance" float, "users_creation_date" timestamp, "value_hash" text, PRIMARY KEY(("users_firstname"), "users_id", value_hash));
+CREATE COLUMNFAMILY "i3717669443" ("items_id" uuid, "items_name" text, "items_description" text, "items_initial_price" float, "items_quantity" int, "items_reserve_price" float, "items_buy_now" float, "items_nb_of_bids" int, "items_max_bid" float, "items_start_date" timestamp, "items_end_date" timestamp, "value_hash" text, PRIMARY KEY(("items_id"), "items_name", value_hash));
+CREATE COLUMNFAMILY "i1661317464" ("items_name" text, "items_id" uuid, "value_hash" text, PRIMARY KEY(("items_name"), "items_id", value_hash));
+ INFO  nose::loader::mysqlloader : i2906147889 [users.id] [] → [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {})
+ INFO  nose::loader::mysqlloader : i3717669443 [items.id] [items.name] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {})
+ INFO  nose::loader::mysqlloader : i1661317464 [items.name] [items.id] → []  $35 Graph(nodes: items, edges: {})
+SELECT DISTINCT users.id AS users_id, users.firstname AS users_firstname, users.lastname AS users_lastname, users.nickname AS users_nickname, users.password AS users_password, users.email AS users_email, users.rating AS users_rating, users.balance AS users_balance, users.creation_date AS users_creation_date FROM users
+ INFO  nose::loader::mysqlloader : i3813239832 [users.firstname] [users.id] → [users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {})
+SELECT DISTINCT items.id AS items_id, items.name AS items_name, items.description AS items_description, items.initial_price AS items_initial_price, items.quantity AS items_quantity, items.reserve_price AS items_reserve_price, items.buy_now AS items_buy_now, items.nb_of_bids AS items_nb_of_bids, items.max_bid AS items_max_bid, items.start_date AS items_start_date, items.end_date AS items_end_date FROM items
+SELECT DISTINCT items.name AS items_name, items.id AS items_id FROM items
+SELECT DISTINCT users.firstname AS users_firstname, users.id AS users_id, users.lastname AS users_lastname, users.nickname AS users_nickname, users.password AS users_password, users.email AS users_email, users.rating AS users_rating, users.balance AS users_balance, users.creation_date AS users_creation_date FROM users
+0.416647087 query for 20000
+0.399118819 query for 20000
+0.487892294 query for 200000
+  insert through csv: i3813239832, /tmp/d20210105-10446-edae7c/i3813239832_0.csv, 20000
+  insert through csv: i2906147889, /tmp/d20210105-10447-1e6g1on/i2906147889_0.csv, 20000
+*** Processing i3813239832_0.csv
+5.737061691 query for 200000
+*** Processing i2906147889_0.csv
+*** DONE: i3813239832_0.csv  number of lines processed: 20001 (20000 inserted)
+Lines Processed: 	19999  Rate: 	9999.5
+*** DONE: i2906147889_0.csv  number of lines processed: 20001 (20000 inserted)
+Lines Processed: 	19999  Rate: 	9999.5
+  insert through csv: i1661317464, /tmp/d20210105-10832-1mmqm5t/i1661317464_0.csv, 200000
+*** Processing i1661317464_0.csv
+Lines Processed: 	100000  Rate: 	50000.0 (50000.0)
+Lines Processed: 	200000  Rate: 	50000.0 (100000.0)
+*** DONE: i1661317464_0.csv  number of lines processed: 200001 (200000 inserted)
+Lines Processed: 	199999  Rate: 	49999.75
+  insert through csv: i3717669443, /tmp/d20210105-11015-k48qe3/i3717669443_0.csv, 200000
+*** Processing i3717669443_0.csv
+Lines Processed: 	100000  Rate: 	9090.90909090909 (9090.90909090909)
+Lines Processed: 	200000  Rate: 	9090.90909090909 (10000.0)
+*** DONE: i3717669443_0.csv  number of lines processed: 200001 (200000 inserted)
+Lines Processed: 	199999  Rate: 	9090.863636363636
+loading through csv time: 109.908160574 for 20000 records on i3813239832
+loading through csv time: 110.093612499 for 20000 records on i2906147889
+loading through csv time: 126.697612931 for 200000 records on i1661317464
+loading through csv time: 171.147224319 for 200000 records on i3717669443
+whole loading time: 177.549790684
+[33m timestep: 0 ===================================================== [0m
+collect index_values for Query
+Executing Query: SELECT users.* FROM users WHERE users.id=? -- 1
+    Executing Plan: [Index lookup i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT users.* FROM users WHERE users.firstname = ? -- 0
+    Executing Plan: [Index lookup i3813239832 [users.firstname] [users.id] \u2192 [users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.id=? -- 4
+    Executing Plan: [Index lookup i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.name = ? -- 3
+    Executing Plan: [Index lookup i1661317464 [items.name] [items.id] \u2192 []  $35 Graph(nodes: items, edges: {}) * 1.0/1 , Index lookup i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1.0 ]
+start benchmarking Query
+Executing INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i2906147889 [users.id] [] → [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i3813239832 [users.firstname] [users.id] → [users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i3813239832 [users.firstname] [users.id] \u2192 [users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+Executing INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i3717669443 [items.id] [items.name] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i1661317464 [items.name] [items.id] → []  $35 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i1661317464 [items.name] [items.id] \u2192 []  $35 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+cleanup
+[33m timestep: 1 ===================================================== [0m
+collect index_values for Query
+Executing Query: SELECT users.* FROM users WHERE users.id=? -- 1
+    Executing Plan: [Index lookup i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT users.* FROM users WHERE users.firstname = ? -- 0
+    Executing Plan: [Index lookup i3813239832 [users.firstname] [users.id] \u2192 [users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.id=? -- 4
+    Executing Plan: [Index lookup i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.name = ? -- 3
+    Executing Plan: [Index lookup i1661317464 [items.name] [items.id] \u2192 []  $35 Graph(nodes: items, edges: {}) * 1.0/1 , Index lookup i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1.0 ]
+start benchmarking Query
+Executing INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i2906147889 [users.id] [] → [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i3813239832 [users.firstname] [users.id] → [users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i3813239832 [users.firstname] [users.id] \u2192 [users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+Executing INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i3717669443 [items.id] [items.name] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i1661317464 [items.name] [items.id] → []  $35 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i1661317464 [items.name] [items.id] \u2192 []  $35 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+cleanup
+[33m timestep: 2 ===================================================== [0m
+collect index_values for Query
+Executing Query: SELECT users.* FROM users WHERE users.id=? -- 1
+    Executing Plan: [Index lookup i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT users.* FROM users WHERE users.firstname = ? -- 0
+    Executing Plan: [Index lookup i3813239832 [users.firstname] [users.id] \u2192 [users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.id=? -- 4
+    Executing Plan: [Index lookup i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.name = ? -- 3
+    Executing Plan: [Index lookup i1661317464 [items.name] [items.id] \u2192 []  $35 Graph(nodes: items, edges: {}) * 1.0/1 , Index lookup i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1.0 ]
+start benchmarking Query
+Executing INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i2906147889 [users.id] [] → [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i3813239832 [users.firstname] [users.id] → [users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i3813239832 [users.firstname] [users.id] \u2192 [users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+Executing INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i3717669443 [items.id] [items.name] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i1661317464 [items.name] [items.id] → []  $35 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i1661317464 [items.name] [items.id] \u2192 []  $35 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+cleanup
+[33m timestep: 3 ===================================================== [0m
+collect index_values for Query
+Executing Query: SELECT users.* FROM users WHERE users.id=? -- 1
+    Executing Plan: [Index lookup i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT users.* FROM users WHERE users.firstname = ? -- 0
+    Executing Plan: [Index lookup i3813239832 [users.firstname] [users.id] \u2192 [users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.id=? -- 4
+    Executing Plan: [Index lookup i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.name = ? -- 3
+    Executing Plan: [Index lookup i1661317464 [items.name] [items.id] \u2192 []  $35 Graph(nodes: items, edges: {}) * 1.0/1 , Index lookup i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1.0 ]
+start benchmarking Query
+Executing INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i2906147889 [users.id] [] → [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i3813239832 [users.firstname] [users.id] → [users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i3813239832 [users.firstname] [users.id] \u2192 [users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+Executing INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i3717669443 [items.id] [items.name] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i1661317464 [items.name] [items.id] → []  $35 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i1661317464 [items.name] [items.id] \u2192 []  $35 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+cleanup
+[33m timestep: 4 ===================================================== [0m
+i624721818 is created before query processing
+i3574970522 is created before query processing
+[36m migrate from: [0m
+collect index_values for Query
+  Index lookup i3813239832 [users.firstname] [users.id] → [users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1 
+[36m to: [0m
+  Index lookup i624721818 [users.firstname] [users.id] → []  $22 Graph(nodes: users, edges: {}) * 1.0/1 
+  Index lookup i2906147889 [users.id] [] → [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1.0 
+===== creating index: i624721818 for the migration
+collected data size for i624721818 is 20038
+Executing Query: SELECT users.* FROM users WHERE users.id=? -- 1
+    Executing Plan: [Index lookup i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT users.* FROM users WHERE users.firstname = ? -- 0
+    Executing Plan: [Index lookup i3813239832 [users.firstname] [users.id] \u2192 [users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.id=? -- 4
+    Executing Plan: [Index lookup i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.name = ? -- 3
+    Executing Plan: [Index lookup i1661317464 [items.name] [items.id] \u2192 []  $35 Graph(nodes: items, edges: {}) * 1.0/1 , Index lookup i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1.0 ]
+start benchmarking Query
+  insert through csv: i624721818, /tmp/d20210105-11636-nrpxzy/i624721818_0.csv, 20038
+*** Processing i624721818_0.csv
+*** DONE: i624721818_0.csv  number of lines processed: 20039 (20038 inserted)
+Lines Processed: 	20037  Rate: 	0.0
+Executing INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i2906147889 [users.id] [] → [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i624721818 [users.firstname] [users.id] → []  $22 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i624721818 [users.firstname] [users.id] \u2192 []  $22 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i3813239832 [users.firstname] [users.id] → [users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i3813239832 [users.firstname] [users.id] \u2192 [users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+Executing INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i3717669443 [items.id] [items.name] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i1661317464 [items.name] [items.id] → []  $35 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i1661317464 [items.name] [items.id] \u2192 []  $35 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i3574970522 [items.name] [items.id] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i3574970522 [items.name] [items.id] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+loading through csv time: 107.629595025 for 20038 records on i624721818
+===== creation done: i624721818 for the migration
+[36m migrate from: [0m
+  Index lookup i1661317464 [items.name] [items.id] → []  $35 Graph(nodes: items, edges: {}) * 1.0/1 
+  Index lookup i3717669443 [items.id] [items.name] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1.0 
+[36m to: [0m
+  Index lookup i3574970522 [items.name] [items.id] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1 
+===== creating index: i3574970522 for the migration
+collected data size for i3574970522 is 200000
+  insert through csv: i3574970522, /tmp/d20210105-11893-cdspkq/i3574970522_0.csv, 200000
+*** Processing i3574970522_0.csv
+Lines Processed: 	100000  Rate: 	10000.0 (10000.0)
+Lines Processed: 	200000  Rate: 	10526.315789473685 (12500.0)
+*** DONE: i3574970522_0.csv  number of lines processed: 200001 (200000 inserted)
+Lines Processed: 	199999  Rate: 	10526.263157894737
+loading through csv time: 179.163536231 for 200000 records on i3574970522
+===== creation done: i3574970522 for the migration
+cleanup
+drop CF: i3813239832
+drop CF: i1661317464
+[33m timestep: 5 ===================================================== [0m
+collect index_values for Query
+Executing Query: SELECT users.* FROM users WHERE users.id=? -- 1
+    Executing Plan: [Index lookup i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT users.* FROM users WHERE users.firstname = ? -- 0
+    Executing Plan: [Index lookup i624721818 [users.firstname] [users.id] \u2192 []  $22 Graph(nodes: users, edges: {}) * 1.0/1 , Index lookup i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1.0 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.id=? -- 4
+    Executing Plan: [Index lookup i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.name = ? -- 3
+    Executing Plan: [Index lookup i3574970522 [items.name] [items.id] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i2906147889 [users.id] [] → [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i624721818 [users.firstname] [users.id] → []  $22 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i624721818 [users.firstname] [users.id] \u2192 []  $22 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+Executing INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i3717669443 [items.id] [items.name] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i3574970522 [items.name] [items.id] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i3574970522 [items.name] [items.id] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+cleanup
+[33m timestep: 6 ===================================================== [0m
+collect index_values for Query
+Executing Query: SELECT users.* FROM users WHERE users.id=? -- 1
+    Executing Plan: [Index lookup i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT users.* FROM users WHERE users.firstname = ? -- 0
+    Executing Plan: [Index lookup i624721818 [users.firstname] [users.id] \u2192 []  $22 Graph(nodes: users, edges: {}) * 1.0/1 , Index lookup i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1.0 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.id=? -- 4
+    Executing Plan: [Index lookup i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.name = ? -- 3
+    Executing Plan: [Index lookup i3574970522 [items.name] [items.id] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i2906147889 [users.id] [] → [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i624721818 [users.firstname] [users.id] → []  $22 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i624721818 [users.firstname] [users.id] \u2192 []  $22 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+Executing INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i3717669443 [items.id] [items.name] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i3574970522 [items.name] [items.id] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i3574970522 [items.name] [items.id] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+cleanup
+[33m timestep: 7 ===================================================== [0m
+collect index_values for Query
+Executing Query: SELECT users.* FROM users WHERE users.id=? -- 1
+    Executing Plan: [Index lookup i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT users.* FROM users WHERE users.firstname = ? -- 0
+    Executing Plan: [Index lookup i624721818 [users.firstname] [users.id] \u2192 []  $22 Graph(nodes: users, edges: {}) * 1.0/1 , Index lookup i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1.0 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.id=? -- 4
+    Executing Plan: [Index lookup i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.name = ? -- 3
+    Executing Plan: [Index lookup i3574970522 [items.name] [items.id] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i2906147889 [users.id] [] → [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i624721818 [users.firstname] [users.id] → []  $22 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i624721818 [users.firstname] [users.id] \u2192 []  $22 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+Executing INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i3717669443 [items.id] [items.name] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i3574970522 [items.name] [items.id] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i3574970522 [items.name] [items.id] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+cleanup
+[33m timestep: 8 ===================================================== [0m
+collect index_values for Query
+Executing Query: SELECT users.* FROM users WHERE users.id=? -- 1
+    Executing Plan: [Index lookup i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT users.* FROM users WHERE users.firstname = ? -- 0
+    Executing Plan: [Index lookup i624721818 [users.firstname] [users.id] \u2192 []  $22 Graph(nodes: users, edges: {}) * 1.0/1 , Index lookup i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1.0 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.id=? -- 4
+    Executing Plan: [Index lookup i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.name = ? -- 3
+    Executing Plan: [Index lookup i3574970522 [items.name] [items.id] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i2906147889 [users.id] [] → [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i624721818 [users.firstname] [users.id] → []  $22 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i624721818 [users.firstname] [users.id] \u2192 []  $22 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+Executing INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i3717669443 [items.id] [items.name] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i3574970522 [items.name] [items.id] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i3574970522 [items.name] [items.id] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+cleanup
+[33m timestep: 9 ===================================================== [0m
+collect index_values for Query
+Executing Query: SELECT users.* FROM users WHERE users.id=? -- 1
+    Executing Plan: [Index lookup i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT users.* FROM users WHERE users.firstname = ? -- 0
+    Executing Plan: [Index lookup i624721818 [users.firstname] [users.id] \u2192 []  $22 Graph(nodes: users, edges: {}) * 1.0/1 , Index lookup i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1.0/1.0 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.id=? -- 4
+    Executing Plan: [Index lookup i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing Query: SELECT items.* FROM items WHERE items.name = ? -- 3
+    Executing Plan: [Index lookup i3574970522 [items.name] [items.id] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1.0/1 ]
+start benchmarking Query
+Executing INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i2906147889 [users.id] [] → [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i2906147889 [users.id] [] \u2192 [users.firstname, users.lastname, users.nickname, users.password, users.email, users.rating, users.balance, users.creation_date]  $103 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO users SET id = ?, firstname=?, lastname = ?, nickname=?, password=?,email=?,rating=?,balance=?,creation_date=? -- 2 users
+       index: i624721818 [users.firstname] [users.id] → []  $22 Graph(nodes: users, edges: {})
+ query_plans: []
+update_steps: [Insert i624721818 [users.firstname] [users.id] \u2192 []  $22 Graph(nodes: users, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+Executing INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i3717669443 [items.id] [items.name] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i3717669443 [items.id] [items.name] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+collect index_values for UPDATE
+start benchmarking UPDATES
+
+   statement: INSERT INTO items SET id = ?, name=?, description = ?, initial_price=?,quantity=?, reserve_price=?, buy_now=?, nb_of_bids=?, max_bid=?,start_date=?,end_date=? -- 5.size items
+       index: i3574970522 [items.name] [items.id] → [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {})
+ query_plans: []
+update_steps: [Insert i3574970522 [items.name] [items.id] \u2192 [items.description, items.initial_price, items.quantity, items.reserve_price, items.buy_now, items.nb_of_bids, items.max_bid, items.start_date, items.end_date]  $296 Graph(nodes: items, edges: {}) * 1]
+  cost_model: #<NoSE::Cost::CassandraCost:0x000000000113c968>
+cleanup
