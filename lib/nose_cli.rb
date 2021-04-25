@@ -29,13 +29,15 @@ module NoSE
                    desc: 'allow actions which require user input'
       class_option :prunedCF, type: :boolean, default: true,
                  desc: 'whether enumerate CFs using pruned index enumerator or not'
-      class_option :enumerator, type: :string, default: 'pruned',
-                   enum: %w(default pruned simple),
+      class_option :enumerator, type: :string, default: 'graph_based',
+                   enum: %w(default pruned simple graph_based),
                    desc: 'the objective function to use in the ILP'
       class_option :iterative, type: :boolean, default: true,
                    desc: 'whether execute optimization in iterative method'
       class_option :is_shared_field_threshold, type: :numeric, default: 2,
                    desc: 'query num threshold for decide whether the field is shared among queries'
+      class_option :choice_limit, type: :numeric, default: 10_000,
+                   desc: 'maximum number of key combinations for indexes in PrunedIndexEnumerator'
 
       def initialize(_options, local_options, config)
         super
@@ -124,8 +126,11 @@ module NoSE
       def search_result(workload, cost_model, max_space = Float::INFINITY,
                         objective = Search::Objective::COST,
                         by_id_graph = false)
+
+        STDERR.puts "measure runtime: start enumeration: #{DateTime.now.strftime('%Q')}"
         enumerated_indexes = enumerate_indexes(workload, cost_model)
-        search = options[:iterative] ?
+
+        search = (options[:iterative] and workload.timesteps > 3) ?
                      Search::IterativeSearch.new(workload, cost_model, objective, by_id_graph, options[:prunedCF])
                      : Search::Search.new(workload, cost_model, objective, by_id_graph, options[:prunedCF])
         indexes = search.pruning_indexes_by_plan_cost enumerated_indexes
@@ -139,7 +144,11 @@ module NoSE
         if options[:enumerator] == "pruned"
           enumerated_indexes =
               PrunedIndexEnumerator.new(workload, cost_model,
-                                        options[:is_shared_field_threshold], 2,2) \
+                                        options[:is_shared_field_threshold], 2,2, choice_limit_size: options[:choice_limit]) \
+                                            .indexes_for_workload.to_a
+        elsif options[:enumerator] == "graph_based"
+          enumerated_indexes =
+            GraphBasedIndexEnumerator.new(workload, cost_model, 2, options[:choice_limit]) \
                                             .indexes_for_workload.to_a
         elsif options[:enumerator] == "default"
           enumerated_indexes = IndexEnumerator.new(workload) \
@@ -258,7 +267,7 @@ module NoSE
 
             file.puts "GROUP #{plan.group}" unless plan.group.nil?
 
-            weight = " * #{weight[ts]} = #{cost}"
+            weight = " (cost:#{plan.cost}) * (weight: #{weight[ts]}) = #{cost}"
             file.puts '  ' * (indent - 1) + plan.query.label \
             unless plan.query.nil? || plan.query.label.nil?
             file.puts '  ' * (indent - 1) + plan.query.inspect + weight
@@ -278,7 +287,7 @@ module NoSE
 
           file.puts "GROUP #{plan.group}" unless plan.group.nil?
 
-          weight = " * #{weight} = #{cost}"
+          weight = " (cost:#{plan.cost}) * (weight: #{weight}) = #{cost}"
           file.puts '  ' * (indent - 1) + plan.query.label \
             unless plan.query.nil? || plan.query.label.nil?
           file.puts '  ' * (indent - 1) + plan.query.inspect + weight
@@ -425,6 +434,7 @@ module NoSE
 
       # @param Hash[statement, plans for each timestep]
       def time_depend_output_update_plans_diff_txt(td_update_plans, file)
+        return if td_update_plans.nil?
         header = "Upseart plan diff \n" + '━' * 50
         file.puts Formatador.parse("[blue]#{header}[/]")
         td_update_plans.each do |stmt, plans|
