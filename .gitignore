@@ -39,3 +39,7 @@
 
 ## Log files
 gurobi.log
+
+# ignore binary
+cassandra-loader
+cassandra-unloader
