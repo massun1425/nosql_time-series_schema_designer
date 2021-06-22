@@ -13,7 +13,11 @@ def chain_relationship(client, table_chain, table_name)
   table_chain[table_name].each do |tbl|
     puts "==== start trim " + tbl["name".to_sym]
     old = client.query("select count(1) as count from #{tbl["name".to_sym]}").to_a.first["count"]
-    client.query("DELETE FROM #{tbl["name".to_sym]} WHERE #{tbl["key".to_sym]} NOT IN (SELECT #{tbl["ref_key".to_sym]} FROM #{table_name});")
+    if tbl.has_key? "composite".to_sym
+      client.query("DELETE FROM #{tbl["name".to_sym]} WHERE (#{tbl["key".to_sym]}, #{tbl["composite".to_sym]}) NOT IN (SELECT #{tbl["ref_key".to_sym]},#{tbl["composite_ref_key".to_sym]} FROM #{table_name});")
+    else
+      client.query("DELETE FROM #{tbl["name".to_sym]} WHERE #{tbl["key".to_sym]} NOT IN (SELECT #{tbl["ref_key".to_sym]} FROM #{table_name});")
+    end
     puts "#{old} -> #{client.query("select count(1) as count from #{tbl["name".to_sym]}").to_a.first["count"]}"
     puts "===="
     chain_relationship(client, table_chain, tbl["name".to_sym])
@@ -30,7 +34,7 @@ table_chain = {
   "customer" => [{name: "orders", key: "o_custkey", ref_key: "c_custkey"}],
   "orders" => [{name: "lineitem", key: "l_orderkey", ref_key: "o_orderkey"}],
   "part" => [{name: "partsupp", key: "ps_partkey", ref_key: "p_partkey"}],
-  "partsupp" => [{name: "lineitem", key: "l_partkey", ref_key: "ps_partkey"}]
+  "partsupp" => [{name: "lineitem", key: "l_partkey", composite: "l_suppkey", ref_key: "ps_partkey", composite_ref_key: "ps_suppkey"}]
 }
 
 
