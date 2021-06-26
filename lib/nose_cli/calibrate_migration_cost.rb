@@ -2,6 +2,7 @@
 
 require 'csv'
 require 'table_print'
+require 'stackprof'
 
 module NoSE
   module CLI
@@ -16,9 +17,13 @@ module NoSE
       def calibrate_migration_cost
         options[:index_cost] = options[:partition_cost] = options[:row_cost] = 0.1
         workload = Workload.new{|_| Model('tpch_card_key_composite_dup_lineitems_order_customer')}
+        #query1 = Statement.parse 'SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+        #                              'WHERE o_custkey.c_mktsegment = ?', workload.model
         query1 = Statement.parse 'SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-                                      'WHERE o_custkey.c_mktsegment = ?', workload.model
-        extract_coeff = calibrate_extract_coeff query1, workload
+                                      'WHERE o_custkey.c_custkey = ?', workload.model
+        StackProf.run(mode: :cpu, out: 'stackprof_calibrate_migration_cost.dump', raw: true) do
+          extract_coeff = calibrate_extract_coeff query1, workload
+        end
       end
 
       private
@@ -48,6 +53,8 @@ module NoSE
         rescue
           sleep 10
           retry_count += 1
+          backend.initialize_client
+          prepared = backend.prepare_query nil, plan.select_fields, plan.params, [plan]
           retry if retry_count < total_retries
           raise
         end
@@ -84,12 +91,10 @@ module NoSE
         backend.cast_records(index, records)
       end
 
-      def distinct_condition_array(conditions_aray_maps)
-        conditions_list = conditions_aray_maps.map{|c| c.values}
-
+      def distinct_condition_array(conditions_list)
         condition_map = {}
         conditions_list.each do |conditions|
-          key = conditions.map do |c|
+          key = conditions.values.map do |c|
             v = c.value.is_a?(Float) ? (c.value * 10000).to_i : c.value
             "#{c.field.inspect} #{c.operator} #{v}"
           end.join(',')
