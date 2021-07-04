@@ -221,7 +221,7 @@ module NoSE
       # @return [void]
       def td_output_csv(table)
         csv_str = CSV.generate do |csv|
-          csv << %w(timestep label group name weight mean cost standard_error)
+          csv << %w(timestep label group name weight mean cost standard_error middle_mean values)
 
           table.each do |group|
             group.measurements.each do |measurement|
@@ -233,7 +233,9 @@ module NoSE
                   measurement.weight,
                   measurement.mean,
                   measurement.estimate,
-                  measurement.standard_error
+                  measurement.standard_error,
+                  measurement.middle_mean,
+                  measurement.values
               ]
             end
           end
