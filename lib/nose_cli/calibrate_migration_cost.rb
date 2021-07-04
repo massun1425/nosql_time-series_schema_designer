@@ -11,18 +11,16 @@ module NoSE
       desc 'calibrate migration coeff', 'test performance of plans in PLAN_FILE'
 
       long_desc <<-LONGDESC
-        calibrate coefficient value for extracting.
+        calibrate coefficient value for extracting and loading.
       LONGDESC
 
       def calibrate_migration_cost
         options[:index_cost] = options[:partition_cost] = options[:row_cost] = 0.1
         workload = Workload.new{|_| Model('tpch_card_key_composite_dup_lineitems_order_customer')}
-        #query1 = Statement.parse 'SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE o_custkey.c_mktsegment = ?', workload.model
-        query1 = Statement.parse 'SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+        query = Statement.parse 'SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
                                       'WHERE o_custkey.c_custkey = ?', workload.model
         StackProf.run(mode: :cpu, out: 'stackprof_calibrate_migration_cost.dump', raw: true) do
-          extract_coeff = calibrate_extract_coeff query1, workload
+          calibrate_extract_coeff query, workload
         end
       end
 
@@ -33,74 +31,34 @@ module NoSE
         backend = Backend::CassandraBackend.new(workload.model, [index], nil, nil, options[:backend])
         backend.initialize_client
         backend.clear_keyspace
-
-        plan = Plans::QueryPlanner.new(workload.model,
-                                          [index],
-                                          Cost::CassandraCost.new({:index_cost => 1, :partition_cost => 1, :row_cost => 1}))
-                                     .min_plan query
-
-        loaded_records = setup_index(index, backend, workload)
-        conditions = whole_execute_conditions(plan.params, loaded_records)
-        conditions = distinct_condition_array(conditions)
-        #conditions = whole_execute_conditions(plan.params, loaded_records).uniq
-        backend.initialize_client
-        prepared = backend.prepare_query nil, plan.select_fields, plan.params, [plan]
-
-        total_retries = 10
-        retry_count = 0
-        begin
-          rows, normal_elapse = measure_time {conditions.flat_map {|condition| prepared.execute condition}}
-        rescue
-          sleep 10
-          retry_count += 1
-          backend.initialize_client
-          prepared = backend.prepare_query nil, plan.select_fields, plan.params, [plan]
-          retry if retry_count < total_retries
-          raise
-        end
-        bulk_rows, bulk_elapse = measure_time {backend.unload_index_by_cassandra_unloader index}
-
-        puts "normal: #{normal_elapse}, bulk: #{bulk_elapse}"
-        fail "normal querying and bulk unloading does not match: normal size #{rows.size.to_s}, bulk size #{bulk_rows.size.to_s} "if rows.size != bulk_rows.size
-        bulk_elapse / normal_elapse
-      end
-
-      # create conditions for each index_values
-      def whole_execute_conditions(params, values)
-        values.map do |value|
-          Hash[params.map do |field_id, condition|
-              [
-                field_id,
-                Condition.new(condition.field, condition.operator, value[condition.field.id])
-              ]
-          end]
-        end
-      end
-
-      def setup_index(index, backend, workload)
         loader = get_class('loader', options).new workload, backend
-        # Produce the DDL and execute unless the dry run option was given
-        backend.create_indexes([index], !options[:dry_run], options[:skip_existing],
-                               options[:drop_existing]).each {|ddl| STDERR.puts ddl}
+        full_values, _ = measure_time {loader.query_for_index(index, options[:loader], true)}
 
-        # Create a new instance of the loader class and execute
-        index_values, loading_time = measure_time {loader.load([index], options[:loader], options[:progress], options[:limit], options[:skip_nonempty], -1)}
-        fail if index_values.keys.size > 1 and index_values.keys.first == index
-        STDERR.puts "whole loading time: " + loading_time.to_s
-        records = Backend::CassandraBackend.remove_any_null_place_holder_row index_values[index]
-        backend.cast_records(index, records)
-      end
+        record_points = {:record_size => [], :loading_time => [], :unloading_time => []}
+        reduction_rates = (1..5).map{|i| (0.2 * i).round(3)}.reverse
+        iteration_times = 5
+        (0...iteration_times).each do |_|
+          reduction_rates.each do |reduction_rate|
+            backend.recreate_index(index, !options[:dry_run], options[:skip_existing], true)
+            target_record_size = (full_values.size * reduction_rate).to_i
+            current_size = (index.size * (target_record_size / index.entries.to_f)).round(4)
+            record_points[:record_size] << current_size
 
-      def distinct_condition_array(conditions_list)
-        condition_map = {}
-        conditions_list.each do |conditions|
-          key = conditions.values.map do |c|
-            v = c.value.is_a?(Float) ? (c.value * 10000).to_i : c.value
-            "#{c.field.inspect} #{c.operator} #{v}"
-          end.join(',')
-          condition_map[key] = conditions
+            sampled_values = full_values.sample(target_record_size, random: Object::Random.new(100))
+            puts "target record size #{sampled_values.size}"
+
+            _, loading_time = measure_time {|_| backend.load_index_by_cassandra_loader index, sampled_values}
+            record_points[:loading_time] << loading_time
+
+            res_values , unloading_time = measure_time {backend.unload_index_by_cassandra_unloader index}
+            record_points[:unloading_time] << unloading_time
+            fail if sampled_values.size != res_values.size
+          end
         end
-        condition_map.values
+        puts record_points
+        hash_array_to_csv record_points
+        multi_regression record_points.slice(:record_size, :loading_time), [:record_size], :loading_time
+        multi_regression record_points.slice(:record_size, :unloading_time),[:record_size], :unloading_time
       end
 
       def measure_time(&block)
