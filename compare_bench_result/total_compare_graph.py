@@ -20,7 +20,8 @@ class FileLoader:
             tmp_lines = f.readlines()
         column = pp.commaSeparatedList.parseString(tmp_lines[0]).asList()
         lines = []
-        header = 'timestep,label,group,name,weight,mean,cost,standard_error\n'
+        #header = 'timestep,label,group,name,weight,mean,cost,standard_error\n'
+        header = tmp_lines[0]
 
         for tl in tmp_lines[1:]:
             if tl != header:
