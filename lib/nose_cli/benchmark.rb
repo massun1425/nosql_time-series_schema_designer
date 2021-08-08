@@ -139,6 +139,19 @@ module NoSE
 
         index_values_hash
       end
+
+      # Get a sample of values from each index used by the queries
+      # @return [Hash]
+      def index_values_by_mysql(indexes, backend, loader, config, iterations = nil)
+        return {} if indexes.empty?
+        index_values_hash = loader.query_for_indexes(indexes, config).map do |index, values|
+          values = Backend::CassandraBackend.remove_any_null_place_holder_row values
+          samples = loader.choose_sample_records(index, values, iterations)
+          rows = backend.cast_records(index, samples)
+          Hash[index, rows]
+        end.reduce(&:merge)
+        index_values_hash
+      end
     end
   end
 end

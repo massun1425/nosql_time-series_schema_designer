@@ -18,7 +18,7 @@ module NoSE
 
       # by benchmark command
       shared_option :mix
-      option :num_iterations, type: :numeric, default: 100,
+      option :num_iterations, type: :numeric, default: 20,
              banner: 'ITERATIONS',
              desc: 'the number of times to execute each ' \
                                     'statement'
@@ -27,7 +27,7 @@ module NoSE
                            'given group'
       option :fail_on_empty, type: :boolean, default: true,
              desc: 'abort if a column family is empty'
-      option :totals, type: :boolean, default: false, aliases: '-t',
+      option :totals, type: :boolean, default: true, aliases: '-t',
              desc: 'whether to include group totals in the output'
       option :format, type: :string, default: 'csv',
              enum: %w(txt csv), aliases: '-f',
@@ -49,41 +49,33 @@ module NoSE
                            '(useful for testing)'
       option :skip_nonempty, type: :boolean, default: true, aliases: '-s',
              desc: 'ignore indexes which are not empty'
-      option :validate_migration, type: :boolean, default: true, aliases: '-v',
-             desc: 'whether migration process'
+      option :validate_migration, type: :boolean, default: false, aliases: '-v',
+             desc: 'whether validate migration process'
+      option :migrate_async, type: :boolean, default: true,
+              desc: 'whether migrate async'
 
       def td_benchmark(plan_file)
         label = File.basename plan_file, '.*'
 
         result, backend = load_time_depend_plans plan_file, options
+        backend.initialize_client
         loader = get_class('loader', options).new result.workload, backend
         backend.clear_keyspace
-        setup_db(result, backend, loader)
+        index_values = setup_db(result, backend, loader)
+        migrator = Migrator::Migrator.new(backend, loader, result, options[:loader], options[:validate_migration])
 
+        StackProf.run(mode: :cpu, out: 'stackprof_check_benchmark_process.dump', raw: true) do
         (0...result.timesteps).each do |timestep|
-          STDERR.puts "\e[33m timestep: #{timestep} ===================================================== \e[0m"
-
-          # this works only for localhost
-          #puts `docker exec cassandra_migrate nodetool flush`
-
-          if timestep < result.timesteps - 1
-            under_creating_indexes = result.time_depend_indexes.indexes_all_timestep[timestep + 1].indexes.to_set -
-                result.time_depend_indexes.indexes_all_timestep[timestep].indexes.to_set
-
-            under_creating_indexes.each do |under_creating_index|
-              backend.create_index(under_creating_index, !options[:dry_run], true)
-              STDERR.puts under_creating_index.key + " is created before query processing"
-            end
-          end
-
-          migrator = Migrator::Migrator.new(backend, loader, options[:loader], options[:validate_migration])
-          #migration_worker, _ = migrate_async(result, timestep, migrator)
-          migrator.migrate(result, timestep)
+          STDERR.puts "\e[33m timestep: #{timestep} at #{Time.now.utc} ===================================================== \e[0m"
+          migrator.create_next_indexes timestep
+          options[:migrate_async] ?
+            migrator.migrate_async(timestep, options[:migrate_async])
+            : migrator.migrate(timestep, options[:migrate_async])
 
           indexes_for_this_timestep = result.indexes_used_in_plans(timestep)
-          index_values = index_values indexes_for_this_timestep, backend,
-                                      options[:num_iterations],
-                                      options[:fail_on_empty]
+          not_collected_indexes = indexes_for_this_timestep.select{|i| not index_values.has_key?(i)}
+          index_values.merge!(index_values_by_mysql(not_collected_indexes, backend, loader, options[:loader], options[:num_iterations]))
+
           group_tables = Hash.new { |h, k| h[k] = [] }
           group_totals = Hash.new { |h, k| h[k] = [0] * options[:num_iterations]}
 
@@ -131,13 +123,16 @@ module NoSE
               # Get all indexes used by support queries
               indexes = plan.query_plans.flat_map(&:indexes) << plan.index
 
+              STDERR.puts "collect index_values for UPDATE"
               # re-setting parameters for the update.
               # index_values possible become obsolete because of the value on the CF can be changed by other update plans
               index_values = index_values indexes, backend,
                                           options[:num_iterations],
                                           options[:fail_on_empty],
-                                          nullable_indexes: under_creating_indexes
+                                          nullable_indexes: migrator.get_under_constructing_indexes(timestep)
 
+              STDERR.puts "start benchmarking UPDATES"
+              STDERR.puts plan.inspect
               measurement = bench_update backend, indexes, plan, index_values,
                                          options[:num_iterations], weight: weight
               if measurement.empty?
@@ -180,9 +175,10 @@ module NoSE
             td_output_csv table
           end
 
-          #migrator.stop
-          migrator.exec_cleanup(result, timestep)
+          migrator.stop if options[:migrate_async]
+          migrator.exec_cleanup(timestep)
           GC.start
+        end
         end
       end
 
@@ -196,10 +192,14 @@ module NoSE
 
         load_started = Time.now.utc
         # Create a new instance of the loader class and execute
-        loader.load indexes, options[:loader], options[:progress],
-                    options[:limit], options[:skip_nonempty]
+        index_values = loader.load indexes, options[:loader], options[:progress],
+                    options[:limit], options[:skip_nonempty], options[:num_iterations]
         load_ended = Time.now.utc
         STDERR.puts "whole loading time: " + (load_ended - load_started).to_s
+        index_values.map do |i, records|
+          records = Backend::CassandraBackend.remove_any_null_place_holder_row records
+          Hash[i, backend.cast_records(i, records)]
+        end.reduce(&:merge)
       end
 
       # Output the table of results
