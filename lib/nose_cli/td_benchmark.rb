@@ -52,7 +52,7 @@ module NoSE
       option :validate_migration, type: :boolean, default: false, aliases: '-v',
              desc: 'whether validate migration process'
       option :migrate_async, type: :boolean, default: true,
-              desc: 'whether migrate async'
+             desc: 'whether migrate async'
 
       def td_benchmark(plan_file)
         label = File.basename plan_file, '.*'
@@ -64,121 +64,119 @@ module NoSE
         index_values = setup_db(result, backend, loader)
         migrator = Migrator::Migrator.new(backend, loader, result, options[:loader], options[:validate_migration])
 
-        StackProf.run(mode: :cpu, out: 'stackprof_check_benchmark_process.dump', raw: true) do
-        (0...result.timesteps).each do |timestep|
-          STDERR.puts "\e[33m timestep: #{timestep} at #{Time.now.utc} ===================================================== \e[0m"
-          migrator.create_next_indexes timestep
-          options[:migrate_async] ?
-            migrator.migrate_async(timestep, options[:migrate_async])
-            : migrator.migrate(timestep, options[:migrate_async])
+        StackProf.run(mode: :cpu, out: "stackprof_check_benchmark_process_#{Time.now.strftime("%m-%d-%Y_%H_%M_%S")}.dump", raw: true) do
+          (0...result.timesteps).each do |timestep|
+            STDERR.puts "\e[33m timestep: #{timestep} at #{Time.now.utc} ===================================================== \e[0m"
+            migrator.create_next_indexes timestep
+            options[:migrate_async] ?
+              migrator.migrate_async(timestep, options[:migrate_async])
+              : migrator.migrate(timestep, options[:migrate_async])
 
-          indexes_for_this_timestep = result.indexes_used_in_plans(timestep)
-          not_collected_indexes = indexes_for_this_timestep.select{|i| not index_values.has_key?(i)}
-          index_values.merge!(index_values_by_mysql(not_collected_indexes, backend, loader, options[:loader], options[:num_iterations]))
+            indexes_for_this_timestep = result.indexes_used_in_plans(timestep)
+            not_collected_indexes = indexes_for_this_timestep.select{|i| not index_values.has_key?(i)}
+            index_values.merge!(index_values_by_mysql(not_collected_indexes, backend, loader, options[:loader], options[:num_iterations]))
 
-          group_tables = Hash.new { |h, k| h[k] = [] }
-          group_totals = Hash.new { |h, k| h[k] = [0] * options[:num_iterations]}
+            group_tables = Hash.new { |h, k| h[k] = [] }
+            group_totals = Hash.new { |h, k| h[k] = [0] * options[:num_iterations]}
 
-          result.time_depend_plans.map{|tdp| tdp.plans[timestep]}.each do |plan|
-            query = plan.query
-            weight = result.workload.time_depend_statement_weights[query]
-            next if query.is_a?(SupportQuery) || !weight
-            @logger.debug { "Executing #{query.text}" }
-            STDERR.puts "Executing Query: #{query.text}"
-            STDERR.puts "    Executing Plan: #{plan.inspect}"
+            result.time_depend_plans.map{|tdp| tdp.plans[timestep]}.each do |plan|
+              query = plan.query
+              weight = result.workload.time_depend_statement_weights[query]
+              next if query.is_a?(SupportQuery) || !weight
+              @logger.debug { "Executing #{query.text}" }
+              STDERR.puts "Executing Query: #{query.text}"
+              STDERR.puts "    Executing Plan: #{plan.inspect}"
 
-            next unless options[:group].nil? || plan.group == options[:group]
+              next unless options[:group].nil? || plan.group == options[:group]
 
-            measurement = nil
-            #StackProf.run(mode: :wall, raw: true, out: "tmp/bench_query_#{timestep}.dump") do
+              STDERR.puts "start benchmarking Query"
               measurement = bench_query backend, plan.indexes, plan, index_values,
                                         options[:num_iterations],
                                         weight: weight
-            #end
-            next if measurement.empty?
-
-            measurement.estimate = plan.cost
-            group_totals[plan.group] = [group_totals[plan.group], measurement.values].transpose.map(&:sum)
-            group_tables[plan.group] << measurement
-          end
-
-          result.workload.updates.each do |update|
-            weight = result.workload.time_depend_statement_weights[update]
-            next unless weight
-
-            update_plans = result.time_depend_update_plans
-                             .map{|tdup| tdup.plans_all_timestep[timestep].plans}
-                             .flatten(1)
-            plans = (update_plans || []).select do |possible_plan|
-              possible_plan.statement == update
-            end
-            next if plans.empty?
-
-            @logger.debug { "Executing #{update.text}" }
-            STDERR.puts "Executing #{update.text}"
-
-            plans.each do |plan|
-              next unless options[:group].nil? || plan.group == options[:group]
-
-              # Get all indexes used by support queries
-              indexes = plan.query_plans.flat_map(&:indexes) << plan.index
-
-              STDERR.puts "collect index_values for UPDATE"
-              # re-setting parameters for the update.
-              # index_values possible become obsolete because of the value on the CF can be changed by other update plans
-              index_values = index_values indexes, backend,
-                                          options[:num_iterations],
-                                          options[:fail_on_empty],
-                                          nullable_indexes: migrator.get_under_constructing_indexes(timestep)
-
-              STDERR.puts "start benchmarking UPDATES"
-              STDERR.puts plan.inspect
-              measurement = bench_update backend, indexes, plan, index_values,
-                                         options[:num_iterations], weight: weight
-              if measurement.empty?
-                puts "measurement was empty"
-                next
-              end
+              next if measurement.empty?
 
               measurement.estimate = plan.cost
               group_totals[plan.group] = [group_totals[plan.group], measurement.values].transpose.map(&:sum)
               group_tables[plan.group] << measurement
             end
-          end
 
-          total = [0] * options[:num_iterations]
-          table = []
-          group_totals.each do |group, group_total|
-            total = [total, group_total].transpose.map(&:sum)
-            total_measurement = Measurements::Measurement.new nil, 'TOTAL'
-            group_table = group_tables[group]
-            total_measurement << group_table.map{|gt| gt.weighted_mean(timestep)} \
+            result.workload.updates.each do |update|
+              weight = result.workload.time_depend_statement_weights[update]
+              next unless weight
+
+              update_plans = result.time_depend_update_plans
+                                   .map{|tdup| tdup.plans_all_timestep[timestep].plans}
+                                   .flatten(1)
+              plans = (update_plans || []).select do |possible_plan|
+                possible_plan.statement == update
+              end
+              next if plans.empty?
+
+              @logger.debug { "Executing #{update.text}" }
+              STDERR.puts "Executing #{update.text}"
+
+              plans.each do |plan|
+                next unless options[:group].nil? || plan.group == options[:group]
+
+                # Get all indexes used by support queries
+                indexes = plan.query_plans.flat_map(&:indexes) << plan.index
+
+                STDERR.puts "collect index_values for UPDATE"
+                # re-setting parameters for the update.
+                # index_values possible become obsolete because of the value on the CF can be changed by other update plans
+                index_values = index_values indexes, backend,
+                                            options[:num_iterations],
+                                            options[:fail_on_empty],
+                                            nullable_indexes: migrator.get_under_constructing_indexes(timestep)
+
+                STDERR.puts "start benchmarking UPDATES"
+                STDERR.puts plan.inspect
+                measurement = bench_update backend, indexes, plan, index_values,
+                                           options[:num_iterations], weight: weight
+                if measurement.empty?
+                  puts "measurement was empty"
+                  next
+                end
+
+                measurement.estimate = plan.cost
+                group_totals[plan.group] = [group_totals[plan.group], measurement.values].transpose.map(&:sum)
+                group_tables[plan.group] << measurement
+              end
+            end
+
+            total = [0] * options[:num_iterations]
+            table = []
+            group_totals.each do |group, group_total|
+              total = [total, group_total].transpose.map(&:sum)
+              total_measurement = Measurements::Measurement.new nil, 'TOTAL'
+              group_table = group_tables[group]
+              total_measurement << group_table.map{|gt| gt.weighted_mean(timestep)} \
                                .inject(0, &:+)
-            group_table << total_measurement if options[:totals]
-            table << OpenStruct.new(timestep: timestep, label: label, group: group,
-                                    measurements: group_table)
-          end
+              group_table << total_measurement if options[:totals]
+              table << OpenStruct.new(timestep: timestep, label: label, group: group,
+                                      measurements: group_table)
+            end
 
-          if options[:totals]
-            total_measurement = Measurements::Measurement.new nil, 'TOTAL'
-            total_measurement << table.map do |group|
-              group.measurements.find { |m| m.name == 'TOTAL' }.mean
-            end.inject(0, &:+)
-            table << OpenStruct.new(timestep: timestep, label: label, group: 'TOTAL',
-                                    measurements: [total_measurement])
-          end
+            if options[:totals]
+              total_measurement = Measurements::Measurement.new nil, 'TOTAL'
+              total_measurement << table.map do |group|
+                group.measurements.find { |m| m.name == 'TOTAL' }.mean
+              end.inject(0, &:+)
+              table << OpenStruct.new(timestep: timestep, label: label, group: 'TOTAL',
+                                      measurements: [total_measurement])
+            end
 
-          case options[:format]
-          when 'txt'
-            td_output_table table
-          else
-            td_output_csv table
-          end
+            case options[:format]
+            when 'txt'
+              td_output_table table
+            else
+              td_output_csv table
+            end
 
-          migrator.stop if options[:migrate_async]
-          migrator.exec_cleanup(timestep)
-          GC.start
-        end
+            migrator.stop if options[:migrate_async]
+            migrator.exec_cleanup(timestep)
+            GC.start
+          end
         end
       end
 
@@ -193,7 +191,7 @@ module NoSE
         load_started = Time.now.utc
         # Create a new instance of the loader class and execute
         index_values = loader.load indexes, options[:loader], options[:progress],
-                    options[:limit], options[:skip_nonempty], options[:num_iterations]
+                                   options[:limit], options[:skip_nonempty], options[:num_iterations]
         load_ended = Time.now.utc
         STDERR.puts "whole loading time: " + (load_ended - load_started).to_s
         index_values.map do |i, records|
@@ -206,12 +204,12 @@ module NoSE
       # @return [void]
       def td_output_table(table)
         columns = [
-            'timestep', 'label', 'group',
-            { 'measurements.name' => { display_name: 'name' } },
-            { 'measurements.weight' => { display_name: 'weight' } },
-            { 'measurements.mean' => { display_name: 'mean' } },
-            { 'measurements.estimate' => { display_name: 'cost' } },
-            { 'measurements.standard_error' => { display_name: 'standard_error' } }
+          'timestep', 'label', 'group',
+          { 'measurements.name' => { display_name: 'name' } },
+          { 'measurements.weight' => { display_name: 'weight' } },
+          { 'measurements.mean' => { display_name: 'mean' } },
+          { 'measurements.estimate' => { display_name: 'cost' } },
+          { 'measurements.standard_error' => { display_name: 'standard_error' } }
         ]
 
         tp table, *columns
@@ -226,16 +224,16 @@ module NoSE
           table.each do |group|
             group.measurements.each do |measurement|
               csv << [
-                  group.timestep,
-                  group.label,
-                  group.group,
-                  measurement.name,
-                  measurement.weight,
-                  measurement.mean,
-                  measurement.estimate,
-                  measurement.standard_error,
-                  measurement.middle_mean,
-                  measurement.values
+                group.timestep,
+                group.label,
+                group.group,
+                measurement.name,
+                measurement.weight,
+                measurement.mean,
+                measurement.estimate,
+                measurement.standard_error,
+                measurement.middle_mean,
+                measurement.values
               ]
             end
           end
