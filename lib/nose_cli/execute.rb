@@ -114,11 +114,11 @@ module NoSE
       # @return [void]
       def output_table(table)
         columns = [
-            'label', 'group',
-            { 'measurements.name' => { display_name: 'name' } },
-            { 'measurements.weight' => { display_name: 'weight' } },
-            { 'measurements.mean' => { display_name: 'mean' } },
-            { 'measurements.estimate' => { display_name: 'cost' } }
+          'label', 'group',
+          { 'measurements.name' => { display_name: 'name' } },
+          { 'measurements.weight' => { display_name: 'weight' } },
+          { 'measurements.mean' => { display_name: 'mean' } },
+          { 'measurements.estimate' => { display_name: 'cost' } }
         ]
 
         tp table, *columns
@@ -163,20 +163,27 @@ module NoSE
         begin
           # Execute each plan and measure the time
           condition_list.each do |conditions|
-            start_time = Time.now.utc
-            prepared.execute conditions
-            measurement << (Time.now.utc - start_time)
+            #puts "conditions ============================================"
+            #puts prepared.inspect
+            #conditions.each {|c| puts c.inspect}
+
+            run_without_gc do
+              start_time = Time.now.utc
+              res = prepared.execute conditions
+              measurement << (Time.now.utc - start_time)
+            end
+            #puts "res ============================================"
+            #res.each {|r| puts r}
           end
           # plot_each_measurement each_execution_measurements
-          GC.start
-        rescue ThreadError
+        rescue Error
           current_times += 1
           STDERR.puts "ThreadError raised. Sleep before next retry"
           sleep(20)
+          backend.initialize_client
           retry if current_times < retry_times
           raise
         end
-        #puts executed_results.inspect
 
         measurement
       end
@@ -226,13 +233,14 @@ module NoSE
 
         measurement = Measurements::Measurement.new plan, weight: weight
 
-        # Execute each plan and measure the time
-        setting_list.zip(condition_list).each do |settings, conditions|
-          start_time = Time.now.utc
-          prepared.each { |p| p.execute settings, conditions }
-          measurement << Time.now.utc - start_time
+        run_without_gc do
+          # Execute each plan and measure the time
+          setting_list.zip(condition_list).each do |settings, conditions|
+            start_time = Time.now.utc
+            prepared.each { |p| p.execute settings, conditions }
+            measurement << Time.now.utc - start_time
+          end
         end
-        GC.start
 
         measurement
       end
@@ -256,8 +264,8 @@ module NoSE
             end
 
             [
-                field_id,
-                Condition.new(condition.field, condition.operator, value)
+              field_id,
+              Condition.new(condition.field, condition.operator, value)
             ]
           end]
         end
@@ -271,8 +279,8 @@ module NoSE
               value = row[condition.field.id]
               next if value.nil?
               [
-                  field_id,
-                  Condition.new(condition.field, condition.operator, value)
+                field_id,
+                Condition.new(condition.field, condition.operator, value)
               ]
             end]
           end
@@ -287,6 +295,18 @@ module NoSE
         g.minimum_value = 0
         g.write("./measure/#{plan.query.comment.gsub("--", "").strip}.png")
         puts measurements.inspect
+      end
+
+      def run_without_gc(&block)
+        GC.start
+        sleep 5
+        GC.disable
+
+        res = block.call
+
+        GC.enable
+        GC.start
+        res
       end
     end
   end
