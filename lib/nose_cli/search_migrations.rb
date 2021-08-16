@@ -70,33 +70,31 @@ module NoSE
         support_query_trees = search.get_support_query_trees_hash query_trees, enumerated_indexes
 
         creation_coefs = [1.0e-06, 1.0e-09]
-        migrate_sup_coefs = [1.0e-15, 1.0e-20, 1.0e-25]
+        migrate_sup_coefs = [1.0e-05, 1.0e-10, 1.0e-15, 1.0e-20]
         intervals = [3000, 7000]
         index_creation_time_coefs = [1.0e-06, 1.0e-09, 1.0e-12] # yusuke これと creation_coef は１つに統合できるのでは?
 
         parameter_combinations = creation_coefs.product(migrate_sup_coefs, intervals, index_creation_time_coefs)
-        #Parallel.each(parameter_combinations.reverse, in_processes: Etc.nprocessors / 2) do |(creation_coe, migrate_sup_coe, interval, index_creation_time_coe)|
-        parameter_combinations.reverse.each do |(creation_coe, migrate_sup_coe, interval, index_creation_time_coe)|
+        Parallel.each(parameter_combinations.reverse, in_processes: Parallel.processor_count / 2) do |(creation_coe, migrate_sup_coe, interval, index_creation_time_coe)|
           puts "======================================================================================="
           puts creation_coe, migrate_sup_coe, interval, index_creation_time_coe
           puts "======================================================================================="
 
-          workload.creation_coeff = creation_coe
-          workload.migrate_support_coeff = migrate_sup_coe
           workload.reset_interval interval
           ENV['INDEX_CREATION_TIME_COEFF'] = index_creation_time_coe.to_s
 
           result = search.search_overlap enumerated_indexes, query_trees, support_query_trees
 
           if result.migrate_plans.size >= 1
-            File.open(dir_name + "/" + [creation_coe, migrate_sup_coe, interval, index_creation_time_coe, result.migrate_plans.size].join("-").gsub(".", "_") + ".txt", "w") do |f|
+            base_file_name = [creation_coe, migrate_sup_coe, interval, index_creation_time_coe, result.migrate_plans.size].join("-").gsub(".", "_")
+            File.open(dir_name + "/" + base_file_name + ".txt", "w") do |f|
               f.puts "======================================================================================="
               f.puts "creation_coe, migrate_sup_coe, interval, index_creation_time_coeff, migration plan num"
               f.puts creation_coe, migrate_sup_coe, interval, index_creation_time_coe, result.migrate_plans.size.to_s
               output_migration_plans_txt result.migrate_plans, f, 1
               f.puts "======================================================================================="
             end
-            File.open(dir_name + "/" + "mig_plan_size_" + [creation_coe, migrate_sup_coe, interval, index_creation_time_coe, result.migrate_plans.size].join("-").gsub(".", "_") + "_whole_result_" + ".txt", "w") do |f|
+            File.open(dir_name + "/" + base_file_name + ".json", "w") do |f|
               output_json result, f
               output_txt result, f
             end
