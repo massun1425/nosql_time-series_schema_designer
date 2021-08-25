@@ -161,24 +161,33 @@ module NoSE
         retry_times = 10
         current_times = 0
         begin
-          # Execute each plan and measure the time
-          condition_list.each do |conditions|
-            #puts "conditions ============================================"
-            #puts prepared.inspect
-            #conditions.each {|c| puts c.inspect}
+          run_without_gc do
+            # Execute each plan and measure the time
+            Parallel.map(condition_list, in_threads: [Parallel.processor_count / 5, 5].min) do |conditions|
+              #condition_list.map do |conditions|
+              #puts "conditions ============================================"
+              #puts prepared.to_s
+              #conditions.each {|c| puts c.inspect}
 
-            run_without_gc do
               start_time = Time.now.utc
-              res = prepared.execute conditions
-              measurement << (Time.now.utc - start_time)
-            end
+              prepared.execute conditions
+              elapse = Time.now.utc - start_time
+
+              if elapse > 5 # run GC after running slow queries
+                GC.enable
+                GC.start
+                GC.disable
+              end
+
+              elapse
+            end.each {|e| measurement << e}
             #puts "res ============================================"
             #res.each {|r| puts r}
           end
           # plot_each_measurement each_execution_measurements
-        rescue Error
+        rescue Exception => e
           current_times += 1
-          STDERR.puts "ThreadError raised. Sleep before next retry"
+          STDERR.puts "ThreadError raised. Sleep before next retry, error: #{e.message}"
           sleep(20)
           backend.initialize_client
           retry if current_times < retry_times
