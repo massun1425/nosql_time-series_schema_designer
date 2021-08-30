@@ -17,17 +17,39 @@ module NoSE
       def calibrate_query_cost
         options[:index_cost] = options[:partition_cost] = options[:row_cost] = 0.1
         workload = Workload.new{|_| Model('tpch_card_key_composite_dup_lineitems_order_customer')}
-
-        query1 = Statement.parse 'SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-                                      'WHERE o_custkey.c_custkey = ?', workload.model
-        calibrate_for_query query1, workload,[0, 1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 200, 300], [1e-2, 5 * 1e-2, 0.1, 0.4, 0.7, 1.0]
-        #calibrate_for_query query1, workload,[100, 200], [0.1, 0.5, 1.0]
-
+        queries = []
 
         #query1 = Statement.parse 'SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE lineitem.l_orderkey = ?', workload.model
-        ##calibrate_for_query query1, workload,[0, 1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 200, 300], [1e-2, 5 * 1e-2, 0.1, 0.4, 0.7, 1.0]
-        #calibrate_for_query query1, workload,[100, 200], [0.1, 0.5, 1.0]
+        #                              'WHERE o_custkey.c_custkey = ?', workload.model
+        #calibrate_for_query query1, workload,[0, 1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 200, 300], [1e-2, 5 * 1e-2, 0.1, 0.4, 0.7, 1.0]
+        ##calibrate_for_queries query1, workload,[100, 200], [0.1, 0.5, 1.0]
+
+        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+                                      'WHERE lineitem.l_orderkey = ?', workload.model)
+        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+                                      'WHERE lineitem.l_linenumber = ?', workload.model)
+        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+                                      'WHERE lineitem.l_quantity= ?', workload.model)
+        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+                                      'WHERE lineitem.l_returnflag = ?', workload.model)
+        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+                                      'WHERE lineitem.l_linestatus= ?', workload.model)
+        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+                                      'WHERE lineitem.l_shipdate = ?', workload.model)
+        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+                                      'WHERE lineitem.l_commitdate = ?', workload.model)
+        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+                                      'WHERE lineitem.l_receiptdate= ?', workload.model)
+        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+                                      'WHERE lineitem.l_shipmode = ?', workload.model)
+        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+                                      'WHERE lineitem.l_shipinstruct = ?', workload.model)
+        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+                                      'WHERE lineitem.l_shipinstruct = ?', workload.model)
+        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+                                      'WHERE lineitem.l_comment = ?', workload.model)
+        #calibrate_for_query query1, workload,[0, 1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 200, 300], [1e-2, 5 * 1e-2, 0.1, 0.4, 0.7, 1.0]
+        calibrate_for_queries queries, workload, [1, 10, 50, 100, 200, 500], [0.01, 0.1, 0.5, 1.0]
 
 
         #query1 = Statement.parse 'SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
@@ -38,8 +60,14 @@ module NoSE
 
       private
 
-      def calibrate_for_query(query, workload, get_nums, reduction_ratios)
-        record_points = calibrate_query_coeff query, workload, get_nums, reduction_ratios
+      def calibrate_for_queries(queries, workload, get_nums, reduction_ratios)
+        record_points_list = queries.flat_map do |q|
+          calibrate_query_coeff q, workload, get_nums, reduction_ratios
+        end
+
+        record_points = {:rows_coeff => [], :parts_coeff => [], :latency => [], :raw_rows_coeff => [], :raw_field_size => []}
+        record_points_list.each {|rp| rp.keys.each {|k| record_points[k] << rp[k]}}
+
         hash_array_to_csv record_points
         multi_regression record_points, [:parts_coeff, :rows_coeff], :latency
       end
@@ -52,7 +80,6 @@ module NoSE
         # ここの割合が (# of returned records) を　x% 倍した値として，レコードセットを取得する．
         # (# of get) は意図的に変化させる．(# of get) は変化させると，その変化分を (# of returned records) にも反映する必要があるので，注意
 
-        record_points = {:rows_coeff => [], :parts_coeff => [], :latency => [], :raw_rows_coeff => [], :raw_field_size => []}
         index = query.materialize_view
         backend = Backend::CassandraBackend.new(workload.model, [index], nil, nil, options[:backend])
         loader = get_class('loader', options).new workload, backend
@@ -69,13 +96,14 @@ module NoSE
         backend.recreate_index(index, !options[:dry_run], options[:skip_existing], true)
 
         #index_values, loading_time = measure_time {loader.load([index], options[:loader], options[:progress], options[:limit], options[:skip_nonempty], -1)}
-        full_values, loading_time = measure_time {loader.query_for_index(index, options[:loader], true)}
+        full_values, loading_time = measure_time {loader.query_for_index(index, options[:loader], false)}
         full_record_size = full_values.size
         STDERR.puts "whole loading time: " + loading_time.to_s
 
+        record_points = []
         loop_times = 2
         loop_times.times do |_|
-          reduction_rates.each do |reduction_rate|
+          record_points << reduction_rates.flat_map do |reduction_rate|
             target_record_size = (full_record_size * reduction_rate).to_i
             puts "start benchmark for #{target_record_size}"
             backend.recreate_index(index, !options[:dry_run], options[:skip_existing], true)
@@ -83,20 +111,20 @@ module NoSE
             sampled_values = full_values.sample(target_record_size, random: Object::Random.new(100))
             backend.load_index_by_cassandra_loader index, sampled_values
 
-            get_nums.each do |get_num|
+            #Parallel.map(get_nums, in_processes: Parallel.processor_count / 4) do |get_num|
+            get_nums.map do |get_num|
               conditions = get_conditions backend, index, plan, sampled_values, get_num
-
               elapse = measure_latency backend, plan, conditions
-
-              record_points[:parts_coeff] << [parts_coeff * get_num, conditions.size].min
-
               real_reduction_rate = (target_record_size / index.entries.to_f).round(10)
-              # the number of returned row would not smaller than 1
-              record_points[:rows_coeff] << [rows_coeff * real_reduction_rate * get_num * step.fields.sum_by(&:size),
-                                             conditions.size > 0 ? step.fields.sum_by(&:size) : 0].max
-              record_points[:raw_rows_coeff] << rows_coeff
-              record_points[:raw_field_size] << step.fields.sum_by(&:size)
-              record_points[:latency] << elapse
+
+              {
+                :parts_coeff => [parts_coeff * get_num, conditions.size].min,
+                :rows_coeff => [rows_coeff * real_reduction_rate * get_num * step.fields.sum_by(&:size),
+                                                     conditions.size > 0 ? step.fields.sum_by(&:size) : 0].max, # the number of returned row would not smaller than 1
+                :raw_rows_coeff => rows_coeff,
+                :raw_field_size => step.fields.sum_by(&:size),
+                :latency => elapse
+              }
             end
           end
         end
@@ -142,8 +170,10 @@ module NoSE
         backend.initialize_client
         prepared = backend.prepare_query nil, plan.select_fields, plan.params, [plan]
         puts "condition_size : #{conditions.size.to_s}"
-        _, elapse = measure_time {conditions.flat_map {|condition| prepared.execute condition}}
-        elapse
+        run_without_gc do
+          _, elapse = measure_time {conditions.flat_map {|condition| prepared.execute condition}}
+          elapse
+        end
       end
 
       def get_conditions(backend, index, plan, rows, iteration)
