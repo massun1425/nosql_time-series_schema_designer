@@ -35,8 +35,13 @@ module NoSE
                            desc: 'whether to group generated indexes in' \
                                  'graphs by ID',
                            aliases: '-i'
+      option :amplify, type: :boolean, default: false,
+             desc: 'whether amplify workload for larger workload'
+      option :frequency_type, type: :string,
+             enum: %w(time_depend static firstTs lastTs),
+             desc: 'choose frequency type of workload'
 
-      def search(name)
+      def search(name, max_space = nil)
         # Get the workload from file or name
         if File.exist? name
           result = load_results name, options[:mix]
@@ -51,21 +56,38 @@ module NoSE
         workload.mix = options[:mix].to_sym \
           unless options[:mix] == 'default' && workload.mix != :default
         workload.remove_updates if options[:read_only]
+        workload.set_frequency_type options[:frequency_type] unless options[:frequency_type].nil?
         cost_model = get_class_from_config options, 'cost', :cost_model
 
         # Execute the advisor
         objective = Search::Objective.const_get options[:objective].upcase
         stating = Time.new
-        StackProf.run(mode: :wall, raw: true, out: 'tmp/search_rubis.dump') do
-          result = search_result workload, cost_model, options[:max_space],
+        result = nil
+        StackProf.run(mode: :cpu, out: 'stackprof_search.dump', raw: true) do
+          result = search_result workload, cost_model, max_space.nil? ? options[:max_space] : max_space,
                                  objective, options[:by_id_graph]
         end
         ending = Time.new
         puts "whole execution time: #{ending - stating}"
+        RunningTimeLogger.info(RunningTimeLogger::Headers::END_RUNNING)
+        RunningTimeLogger.write_running_times
+
+        print_each_plan_cost result
         output_search_result result, options unless result.nil?
+        result
       end
 
       private
+
+      def print_each_plan_cost(result)
+        puts "=============================="
+        result.time_depend_plans.sort_by{|tp| tp.query.comment}.each do |tp|
+          puts "#{tp.query.comment}, #{tp.plans.map{|p| p.steps
+                                                         .select{|s| s.instance_of? Plans::IndexLookupPlanStep}.size > 1 ? "JP" : "MV"}
+                                         .zip(tp.plans.map(&:cost))}"
+        end
+        puts "=============================="
+      end
 
       # Output results from the search procedure
       # @return [void]
