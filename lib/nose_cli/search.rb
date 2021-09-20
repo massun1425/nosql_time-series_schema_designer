@@ -79,7 +79,9 @@ module NoSE
 
         begin
           backend = get_backend options, result
-          send(('output_' + options[:format]).to_sym,
+          send(('output_txt').to_sym,
+               result, file, options[:enumerated], backend)
+          send(('output_json').to_sym,
                result, file, options[:enumerated], backend)
         ensure
           file.close unless options[:output].nil?
