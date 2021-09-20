@@ -35,8 +35,6 @@ module NoSE
                            desc: 'whether to group generated indexes in' \
                                  'graphs by ID',
                            aliases: '-i'
-      option :amplify, type: :boolean, default: false,
-             desc: 'whether amplify workload for larger workload'
       option :frequency_type, type: :string,
              enum: %w(time_depend static firstTs lastTs),
              desc: 'choose frequency type of workload'
@@ -51,7 +49,6 @@ module NoSE
         end
 
         RunningTimeLogger.info(RunningTimeLogger::Headers::START_RUNNING)
-        workload = amplify_workload(workload) if options[:amplify]
         # Prepare the workload and the cost model
         workload.mix = options[:mix].to_sym \
           unless options[:mix] == 'default' && workload.mix != :default
@@ -110,41 +107,6 @@ module NoSE
         end
       end
 
-      def amplify_workload(workload)
-        queries = workload.statement_weights.keys.select{|s| s.is_a? Query}
-        queries.each do |base_query|
-          puts base_query.text
-          amplified_queries = amplify_query base_query
-          next if amplified_queries.nil?
-          amplified_queries.each do |aq|
-            puts "    " + aq.text
-            frequency = workload.time_depend_statement_weights[base_query]
-            workload.add_statement aq.text,
-                                   {workload.mix => frequency},
-                                   group: base_query.group,
-                                   frequency: frequency
-          end
-        end
-
-        workload
-      end
-
-      private
-
-      def amplify_query(query)
-        return if query.graph.entities.size > 1
-        return if query.conditions.values.select{|c| c.operator == "=".to_sym}.size > 1
-        entity = query.graph.entities.first
-        entity
-        amplify_queries = entity.fields.values.delete_if{|f| f == query.conditions.values.first.field}.map do |f|
-          tmp_query = query.dup
-          tmp_query.conditions = {f.id => Condition.new(f, "=".to_sym, nil)}
-          tmp_query.comment = tmp_query.comment + "_amplified_#{f.id}"
-          tmp_query.set_text
-          tmp_query
-        end
-        amplify_queries
-      end
     end
   end
 end
