@@ -158,16 +158,16 @@ module NoSE
 
         measurement = Measurements::Measurement.new plan, weight: weight
 
+        puts "<condition_list>"
+        condition_list.each {|c| puts c}
+        puts "</condition_list>"
+
         retry_times = 10
         current_times = 0
         begin
           run_without_gc do
             # Execute each plan and measure the time
-            Parallel.map(condition_list, in_threads: [Parallel.processor_count / 5, 5].min) do |conditions|
-              #condition_list.map do |conditions|
-              #puts "conditions ============================================"
-              #puts prepared.to_s
-              #conditions.each {|c| puts c.inspect}
+            condition_list.map do |conditions|
 
               start_time = Time.now.utc
               prepared.execute conditions
@@ -181,8 +181,6 @@ module NoSE
 
               elapse
             end.each {|e| measurement << e}
-            #puts "res ============================================"
-            #res.each {|r| puts r}
           end
           # plot_each_measurement each_execution_measurements
         rescue Exception => e
