@@ -144,8 +144,11 @@ module NoSE
       # @return [Hash]
       def index_values_by_mysql(indexes, backend, loader, config, iterations = nil)
         return {} if indexes.empty?
-        index_values_hash = loader.query_for_indexes(indexes, config).map do |index, values|
-          values = Backend::CassandraBackend.remove_any_null_place_holder_row values
+        does_outer_join = false
+
+        # Since queries for MySQL has ORDER BY, query_for_indexes() is expected to return the same records
+        index_values_hash = loader.query_for_indexes(indexes, config, does_outer_join: does_outer_join, limit: iterations * 100).map do |index, values|
+          values = Backend::CassandraBackend.remove_any_null_place_holder_row values if does_outer_join
           samples = loader.choose_sample_records(index, values, iterations)
           rows = backend.cast_records(index, samples)
           Hash[index, rows]

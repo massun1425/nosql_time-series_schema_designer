@@ -4,6 +4,7 @@ require 'formatador'
 require 'ostruct'
 require 'json'
 require 'stackprof'
+require 'sigdump/setup'
 
 module NoSE
   module CLI
@@ -36,7 +37,7 @@ module NoSE
                                  'graphs by ID',
                            aliases: '-i'
       option :frequency_type, type: :string,
-             enum: %w(time_depend static firstTs lastTs),
+             enum: %w(time_depend static firstTs lastTs ideal),
              desc: 'choose frequency type of workload'
 
       def search(name, max_space = nil)
@@ -59,11 +60,10 @@ module NoSE
         # Execute the advisor
         objective = Search::Objective.const_get options[:objective].upcase
         stating = Time.new
-        result = nil
-        StackProf.run(mode: :cpu, out: 'stackprof_search.dump', raw: true) do
-          result = search_result workload, cost_model, max_space.nil? ? options[:max_space] : max_space,
-                                 objective, options[:by_id_graph]
-        end
+        #StackProf.run(mode: :cpu, out: 'stackprof_search.dump', raw: true) do
+        result = search_result workload, cost_model, max_space.nil? ? options[:max_space] : max_space,
+                               objective, options[:by_id_graph]
+        #end
         ending = Time.new
         puts "whole execution time: #{ending - stating}"
         RunningTimeLogger.info(RunningTimeLogger::Headers::END_RUNNING)
@@ -77,6 +77,7 @@ module NoSE
       private
 
       def print_each_plan_cost(result)
+        return unless @workload.instance_of?(TimeDependWorkload)
         puts "=============================="
         result.time_depend_plans.sort_by{|tp| tp.query.comment}.each do |tp|
           puts "#{tp.query.comment}, #{tp.plans.map{|p| p.steps

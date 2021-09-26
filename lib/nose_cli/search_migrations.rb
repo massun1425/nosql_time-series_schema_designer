@@ -65,7 +65,6 @@ module NoSE
         enumerated_indexes = enumerate_indexes(workload, cost_model)
 
         search = Search::CachedSearch.new(workload, cost_model, objective, options[:by_id_graph], options[:prunedCF])
-        enumerated_indexes = search.pruning_indexes_by_plan_cost enumerated_indexes
         query_trees = search.get_query_trees_hash enumerated_indexes
         support_query_trees = search.get_support_query_trees_hash query_trees, enumerated_indexes
 

@@ -19,57 +19,93 @@ module NoSE
         workload = Workload.new{|_| Model('tpch_card_key_composite_dup_lineitems_order_customer')}
         queries = []
 
-        #query1 = Statement.parse 'SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE o_custkey.c_custkey = ?', workload.model
-        #calibrate_for_query query1, workload,[0, 1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 200, 300], [1e-2, 5 * 1e-2, 0.1, 0.4, 0.7, 1.0]
-        ##calibrate_for_queries query1, workload,[100, 200], [0.1, 0.5, 1.0]
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+        #                              'WHERE lineitem.l_orderkey = ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+        #                              'WHERE lineitem.l_linenumber = ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+        #                              'WHERE lineitem.l_quantity= ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+        #                              'WHERE lineitem.l_returnflag = ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+        #                              'WHERE lineitem.l_linestatus= ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+        #                              'WHERE lineitem.l_shipdate = ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+        #                              'WHERE lineitem.l_commitdate = ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+        #                              'WHERE lineitem.l_receiptdate= ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+        #                              'WHERE lineitem.l_shipmode = ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+        #                              'WHERE lineitem.l_shipinstruct = ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+        #                              'WHERE lineitem.l_shipinstruct = ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+        #                              'WHERE lineitem.l_comment = ?', workload.model)
 
-        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey '\
+        #                              'WHERE l_orderkey.o_orderkey = ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey '\
+        #                              'WHERE l_orderkey.o_orderstatus = ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey '\
+        #                              'WHERE l_orderkey.o_totalprice = ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey '\
+        #                              'WHERE l_orderkey.o_orderdate = ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey '\
+        #                              'WHERE l_orderkey.o_orderpriority = ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey '\
+        #                              'WHERE l_orderkey.o_clerk = ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey '\
+        #                              'WHERE l_orderkey.o_shippriority = ?', workload.model)
+        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey '\
+        #                              'WHERE l_orderkey.o_comment = ?', workload.model)
+
+        # fast queries
+        queries << Statement.parse('SELECT l_orderkey.* FROM lineitem.l_orderkey.o_custkey '\
                                       'WHERE lineitem.l_orderkey = ?', workload.model)
-        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-                                      'WHERE lineitem.l_linenumber = ?', workload.model)
-        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-                                      'WHERE lineitem.l_quantity= ?', workload.model)
-        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-                                      'WHERE lineitem.l_returnflag = ?', workload.model)
-        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-                                      'WHERE lineitem.l_linestatus= ?', workload.model)
-        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-                                      'WHERE lineitem.l_shipdate = ?', workload.model)
-        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-                                      'WHERE lineitem.l_commitdate = ?', workload.model)
-        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-                                      'WHERE lineitem.l_receiptdate= ?', workload.model)
-        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-                                      'WHERE lineitem.l_shipmode = ?', workload.model)
-        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-                                      'WHERE lineitem.l_shipinstruct = ?', workload.model)
-        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-                                      'WHERE lineitem.l_shipinstruct = ?', workload.model)
-        queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+        queries << Statement.parse('SELECT lineitem.* FROM lineitem.l_orderkey.o_custkey '\
                                       'WHERE lineitem.l_comment = ?', workload.model)
-        #calibrate_for_query query1, workload,[0, 1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 200, 300], [1e-2, 5 * 1e-2, 0.1, 0.4, 0.7, 1.0]
-        calibrate_for_queries queries, workload, [1, 10, 50, 100, 200, 500], [0.01, 0.1, 0.5, 1.0]
 
+        # medium queries
+        #queries << Statement.parse('SELECT l_orderkey.* FROM lineitem.l_orderkey.o_custkey '\
+        #                              'WHERE lineitem.l_quantity= ?', workload.model)
+        queries << Statement.parse('SELECT lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+                                      'WHERE lineitem.l_shipdate = ?', workload.model)
 
-        #query1 = Statement.parse 'SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE o_custkey.c_custkey = ?', workload.model
-        #calibrate_for_query query1, workload,[0, 1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 200, 300], [1e-2, 5 * 1e-2, 0.1, 0.4, 0.7, 1.0]
-        #calibrate_for_query query1, workload,[100, 200], [0.1, 0.5, 1.0]
+        # slow queries
+        #queries << Statement.parse('SELECT l_orderkey.* FROM lineitem.l_orderkey.o_custkey '\
+        #                              'WHERE lineitem.l_linenumber = ?', workload.model)
+        #queries << Statement.parse('SELECT lineitem.* FROM lineitem.l_orderkey.o_custkey '\
+        #                              'WHERE lineitem.l_discount = ?', workload.model)
+
+        calibrate_for_queries queries, workload, [1, 10, 50, 100], [0.01, 0.1, 0.5, 1.0]
       end
 
       private
 
+      def calculate_current_records(record_points)
+        record_points_hash = {:rows_coeff => [], :parts_coeff => [], :latency => [], :raw_rows_coeff => [], :raw_field_size => [], :raw_latency => []}
+        record_points.each {|rp| rp.keys.each {|k| record_points_hash[k] << rp[k]}}
+
+        hash_array_to_csv record_points_hash
+
+        begin
+          multi_regression record_points_hash, [:parts_coeff, :rows_coeff], :latency
+        rescue => e
+          STDERR.puts e.inspect
+        end
+      end
+
       def calibrate_for_queries(queries, workload, get_nums, reduction_ratios)
         record_points_list = queries.flat_map do |q|
-          calibrate_query_coeff q, workload, get_nums, reduction_ratios
+          raw_record_points = calibrate_query_coeff q, workload, get_nums, reduction_ratios
+          calculate_current_records raw_record_points
+          raw_record_points
         end
 
-        record_points = {:rows_coeff => [], :parts_coeff => [], :latency => [], :raw_rows_coeff => [], :raw_field_size => []}
-        record_points_list.each {|rp| rp.keys.each {|k| record_points[k] << rp[k]}}
-
-        hash_array_to_csv record_points
-        multi_regression record_points, [:parts_coeff, :rows_coeff], :latency
+        calculate_current_records record_points_list
       end
 
       def calibrate_query_coeff(query, workload, get_nums, reduction_rates)
@@ -101,9 +137,9 @@ module NoSE
         STDERR.puts "whole loading time: " + loading_time.to_s
 
         record_points = []
-        loop_times = 2
+        loop_times = 1
         loop_times.times do |_|
-          record_points << reduction_rates.flat_map do |reduction_rate|
+          record_points += reduction_rates.flat_map do |reduction_rate|
             target_record_size = (full_record_size * reduction_rate).to_i
             puts "start benchmark for #{target_record_size}"
             backend.recreate_index(index, !options[:dry_run], options[:skip_existing], true)
@@ -123,7 +159,8 @@ module NoSE
                                                      conditions.size > 0 ? step.fields.sum_by(&:size) : 0].max, # the number of returned row would not smaller than 1
                 :raw_rows_coeff => rows_coeff,
                 :raw_field_size => step.fields.sum_by(&:size),
-                :latency => elapse
+                :latency => [elapse, 0.001].max,
+                :raw_latency => elapse
               }
             end
           end
@@ -171,7 +208,7 @@ module NoSE
         prepared = backend.prepare_query nil, plan.select_fields, plan.params, [plan]
         puts "condition_size : #{conditions.size.to_s}"
         run_without_gc do
-          _, elapse = measure_time {conditions.flat_map {|condition| prepared.execute condition}}
+          _, elapse = measure_time {conditions.each {|condition| prepared.execute condition}}
           elapse
         end
       end

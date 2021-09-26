@@ -19,9 +19,7 @@ module NoSE
         workload = Workload.new{|_| Model('tpch_card_key_composite_dup_lineitems_order_customer')}
         query = Statement.parse 'SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
                                       'WHERE o_custkey.c_custkey = ?', workload.model
-        StackProf.run(mode: :cpu, out: 'stackprof_calibrate_migration_cost.dump', raw: true) do
-          calibrate_extract_coeff query, workload
-        end
+        calibrate_extract_coeff query, workload
       end
 
       private
