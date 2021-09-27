@@ -53,18 +53,20 @@ module NoSE
              desc: 'whether validate migration process'
       option :migrate_async, type: :boolean, default: true,
              desc: 'whether migrate async'
+      option :ideal, type: :boolean, default: false,
+             desc: 'whether benchmark ideal schemas'
 
       def td_benchmark(plan_file)
         label = File.basename plan_file, '.*'
+        start_benchmarking = Time.now
 
         result, backend = load_time_depend_plans plan_file, options
         backend.initialize_client
         loader = get_class('loader', options).new result.workload, backend
         backend.clear_keyspace
-        index_values = setup_db(result, backend, loader)
+        index_values = setup_db(result, backend, loader, options[:ideal])
         migrator = Migrator::Migrator.new(backend, loader, result, options[:loader], options[:validate_migration])
 
-        StackProf.run(mode: :cpu, out: "stackprof_check_benchmark_process_#{Time.now.strftime("%m-%d-%Y_%H_%M_%S")}.dump", raw: true) do
           (0...result.timesteps).each do |timestep|
             STDERR.puts "\e[33m timestep: #{timestep} at #{Time.now.utc} ===================================================== \e[0m"
             migrator.create_next_indexes timestep
@@ -80,6 +82,7 @@ module NoSE
             group_totals = Hash.new { |h, k| h[k] = [0] * options[:num_iterations]}
 
             result.time_depend_plans.map{|tdp| tdp.plans[timestep]}.each do |plan|
+              current_backend = get_backend options.dup, result.dup
               query = plan.query
               weight = result.workload.time_depend_statement_weights[query]
               next if query.is_a?(SupportQuery) || !weight
@@ -90,7 +93,7 @@ module NoSE
               next unless options[:group].nil? || plan.group == options[:group]
 
               STDERR.puts "start benchmarking Query"
-              measurement = bench_query backend, plan.indexes, plan, index_values,
+              measurement = bench_query current_backend, plan.indexes, plan, index_values,
                                         options[:num_iterations],
                                         weight: weight
               next if measurement.empty?
@@ -174,16 +177,19 @@ module NoSE
             end
 
             migrator.stop if options[:migrate_async]
-            migrator.exec_cleanup(timestep)
+            migrator.exec_cleanup(timestep) unless options[:ideal]
             GC.start
           end
-        end
+
+        puts "whole benchmarking time #{Time.now - start_benchmarking}"
       end
 
       private
 
-      def setup_db(result, backend, loader)
-        indexes = result.time_depend_indexes.indexes_all_timestep.first.indexes
+      def setup_db(result, backend, loader, is_ideal = false)
+        # create all indexes at once before first timestep for ideal schemas
+        indexes = is_ideal ? result.time_depend_indexes.indexes_all_timestep.flat_map(&:indexes).uniq
+                    : result.time_depend_indexes.indexes_all_timestep.first.indexes
         # Produce the DDL and execute unless the dry run option was given
         backend.create_indexes(indexes, !options[:dry_run], options[:skip_existing],
                                options[:drop_existing]).each {|ddl| STDERR.puts ddl}
