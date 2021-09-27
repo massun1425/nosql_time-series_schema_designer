@@ -2,10 +2,10 @@
 
 set -e
 
-docker-compose down -v
+docker-compose -f docker-compose_dumped.yml down -v
 docker system prune
-COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose build --no-cache --parallel
-docker-compose up -d
+COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1  docker-compose -f docker-compose_dumped.yml build --no-cache --parallel
+docker-compose -f docker-compose_dumped.yml up -d
 
 sleep 60
-./setup_db.sh
+./setup_db_dump.sh

@@ -68,10 +68,7 @@ services:
     tty: true
   mysql:
     container_name: mysql_tpch
-    build: 
-      context: ./backend/mysql_tpch
-      args:
-        SF: 2
+    build: ./backend/mysql_tpch_dump
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: tpch
