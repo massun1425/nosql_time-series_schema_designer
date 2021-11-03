@@ -99,10 +99,14 @@ module NoSE
 
         begin
           backend = get_backend options, result
+          puts "<txt format>"
           send(('output_txt').to_sym,
                result, file, options[:enumerated], backend)
+          puts "</txt format>"
+          puts "<json format>"
           send(('output_json').to_sym,
                result, file, options[:enumerated], backend)
+          puts "</json format>"
         ensure
           file.close unless options[:output].nil?
         end

@@ -31,7 +31,7 @@ module NoSE
       class_option :prunedCF, type: :boolean, default: true,
                  desc: 'whether enumerate CFs using pruned index enumerator or not'
       class_option :enumerator, type: :string, default: 'graph_based',
-                   enum: %w(default pruned simple graph_based),
+                   enum: %w(default pruned simple graph_based baseline),
                    desc: 'the objective function to use in the ILP'
       class_option :iterative, type: :boolean, default: true,
                    desc: 'whether execute optimization in iterative method'
@@ -153,6 +153,9 @@ module NoSE
           enumerated_indexes =
             GraphBasedIndexEnumerator.new(workload, cost_model, 2, options[:choice_limit]) \
                                             .indexes_for_workload.to_a
+        elsif options[:enumerator] == "baseline"
+          enumerated_indexes =
+            BaseLineIndexEnumerator.new(workload, cost_model).indexes_for_workload.to_a
         elsif options[:enumerator] == "default"
           enumerated_indexes = IndexEnumerator.new(workload) \
                                               .indexes_for_workload.to_a

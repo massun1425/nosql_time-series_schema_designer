@@ -19,66 +19,11 @@ module NoSE
         workload = Workload.new{|_| Model('tpch_card_key_composite_dup_lineitems_order_customer')}
         queries = []
 
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE lineitem.l_orderkey = ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE lineitem.l_linenumber = ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE lineitem.l_quantity= ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE lineitem.l_returnflag = ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE lineitem.l_linestatus= ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE lineitem.l_shipdate = ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE lineitem.l_commitdate = ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE lineitem.l_receiptdate= ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE lineitem.l_shipmode = ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE lineitem.l_shipinstruct = ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE lineitem.l_shipinstruct = ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE lineitem.l_comment = ?', workload.model)
-
-
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey '\
-        #                              'WHERE l_orderkey.o_orderkey = ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey '\
-        #                              'WHERE l_orderkey.o_orderstatus = ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey '\
-        #                              'WHERE l_orderkey.o_totalprice = ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey '\
-        #                              'WHERE l_orderkey.o_orderdate = ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey '\
-        #                              'WHERE l_orderkey.o_orderpriority = ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey '\
-        #                              'WHERE l_orderkey.o_clerk = ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey '\
-        #                              'WHERE l_orderkey.o_shippriority = ?', workload.model)
-        #queries << Statement.parse('SELECT l_orderkey.*, lineitem.* FROM lineitem.l_orderkey '\
-        #                              'WHERE l_orderkey.o_comment = ?', workload.model)
-
-        # fast queries
+        # <fast queries>
         queries << Statement.parse('SELECT l_orderkey.* FROM lineitem.l_orderkey.o_custkey '\
                                       'WHERE lineitem.l_orderkey = ?', workload.model)
         queries << Statement.parse('SELECT lineitem.* FROM lineitem.l_orderkey.o_custkey '\
                                       'WHERE lineitem.l_comment = ?', workload.model)
-
-        # medium queries
-        #queries << Statement.parse('SELECT l_orderkey.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE lineitem.l_quantity= ?', workload.model)
-        queries << Statement.parse('SELECT lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-                                      'WHERE lineitem.l_shipdate = ?', workload.model)
-
-        # slow queries
-        #queries << Statement.parse('SELECT l_orderkey.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE lineitem.l_linenumber = ?', workload.model)
-        #queries << Statement.parse('SELECT lineitem.* FROM lineitem.l_orderkey.o_custkey '\
-        #                              'WHERE lineitem.l_discount = ?', workload.model)
 
         calibrate_for_queries queries, workload, [1, 10, 50, 100], [0.01, 0.1, 0.5, 1.0]
       end
