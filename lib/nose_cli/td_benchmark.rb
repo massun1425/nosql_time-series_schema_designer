@@ -18,7 +18,7 @@ module NoSE
 
       # by benchmark command
       shared_option :mix
-      option :num_iterations, type: :numeric, default: 20,
+      option :num_iterations, type: :numeric, default: 10,
              banner: 'ITERATIONS',
              desc: 'the number of times to execute each ' \
                                     'statement'
