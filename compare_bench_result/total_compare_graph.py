@@ -54,56 +54,37 @@ class Graph:
     @classmethod
     def convert_legends(cls, legend):
         convert_hash = {
-            "bench_tpch_22q_prop": "提案手法",
-            "bench_tpch_22q_static": "平均実行頻度に対する最適化",
-            "bench_tpch_22q_first": "開始時実行頻度に対する最適化",
-            "bench_tpch_22q_last": "終了時実行頻度に対する最適化",
+            "cyclic_prop_80per_15230144000_12ts": "prop.",
+            "cyclic_prop_80per_no_iterative_15230144000_12ts": "prop. without cf pruning",
+            "cyclic_first_80per_15230144000_12ts": "first time step freq.",
+            "cyclic_last_80per_15230144000_12ts": "last time step freq.",
+            "cyclic_static_80per_15230144000_12ts": "average freq.",
+            "cyclic_ideal_80per_15230144000_12ts": "ideal optimization",
 
-            "simple_prop": "提案手法",
-            "simple_static": "平均実行頻度に対する最適化",
-            "simple_first": "開始時実行頻度に対する最適化",
-            "simple_last": "終了時実行頻度に対する最適化",
+            "monotonic_prop_80per_15230144000_12ts": "prop.",
+            "monotonic_prop_80per_no_iterative_15230144000_12ts": "prop. without cf pruning",
+            "monotonic_first_80per_15230144000_12ts": "first time step freq.",
+            "monotonic_last_80per_15230144000_12ts": "last time step freq.",
+            "monotonic_static_80per_15230144000_12ts": "average freq.",
+            "monotonic_ideal_80per_15230144000_12ts": "ideal optimization",
 
-            "bench_90per_8008326000_prop": "提案手法",
-            "bench_90per_8008326000_static": "平均実行頻度に対する最適化",
-            "bench_90per_8008326000_first": "開始時実行頻度に対する最適化",
-            "bench_90per_8008326000_last": "終了時実行頻度に対する最適化",
-
-            "bench_non_iterative_first": "開始時頻度に対する最適化",
-            "bench_non_iterative_last": "終了時頻度に対する最適化",
-            #"bench_non_iterative_first": "開始時実行頻度に対する最適化",
-            #"bench_non_iterative_last": "終了時実行頻度に対する最適化",
-            #"bench_non_iterative_static": "平均実行頻度に対する最適化",
-          "bench_non_iterative_static": "平均頻度に対する最適化",
-            #"bench_non_iterative_prop": "提案手法 (候補削減無し)" ,
-            #"bench_iterative_prop": "提案手法 (候補削減有り)" ,
-            "bench_iterative_prop": "提案手法",
-
+            "peak_prop_80per_15230144000_12ts": "prop.",
+            "peak_prop_80per_no_iterative_15230144000_12ts": "prop. without cf pruning",
+            "peak_first_80per_15230144000_12ts": "first time step freq.",
+            "peak_last_80per_15230144000_12ts": "last time step freq.",
+            "peak_static_80per_15230144000_12ts": "average freq.",
+            "peak_ideal_80per_15230144000_12ts": "ideal optimization"
         }
         if legend in convert_hash:
             return convert_hash[legend]
         return legend
-
-    #@classmethod
-    #def convert_labels(cls, label):
-    #    convert_hash = {
-    #        "Average Latency [s]": "平均応答時間 [s]",
-    #        "Weighted Latency [s]": "応答時間の各処理の実行頻度による加重平均値 [s]",
-    #        "timestep": "時刻"
-    #    }
-    #    if label in convert_hash:
-    #        return convert_hash[label]
-    #    return label
-
 
     @classmethod
     def plot_graph(cls, title, x_label, y_label, label_data_hash, label_se_hash):
         x = list(range(0, len(list(label_data_hash.values())[0])))
 
         # fig = pyplot.figure(dpi=300)
-        #fig = pyplot.figure(dpi=200, figsize=(80, 60))
-        fig = pyplot.figure(figsize=(8, 4.5))
-        #fig = pyplot.figure(figsize=(8, 4))
+        fig = pyplot.figure(figsize=(7, 4))
         ax = fig.add_subplot(1, 1, 1)
         y_max_lim = 0
         cmap = pyplot.get_cmap("tab10")
@@ -123,14 +104,12 @@ class Graph:
                     doubled_se_interval = [se * 2 for se in label_se_hash[label]]
                     ax.errorbar(x, label_data_hash[label], doubled_se_interval, fmt='o', capsize=2, ecolor='black', markeredgecolor = "black", color='w')
 
-        pyplot.rcParams["font.size"] = 13
+        #pyplot.rcParams["font.size"] = 13
         pyplot.title(Graph.title_with_newline(title))
-        #pyplot.legend(fontsize=13)
-        pyplot.subplots_adjust(left=0.2, right=0.95, bottom=0.13, top=0.95)
-        #x_label = Graph.convert_labels(x_label)
-        #y_label = Graph.convert_labels(y_label)
-        pyplot.xlabel(x_label, fontsize=14)
-        pyplot.ylabel(y_label, fontsize=13)
+        pyplot.subplots_adjust(left=0.2, right=0.95, bottom=0.13, top=0.9)
+        pyplot.xlabel(x_label)
+        pyplot.ylabel(y_label)
+
         pyplot.tick_params(labelsize=13)
         ax.set_ylim(ymin=0)
         ax.set_ylim(ymax=y_max_lim * 1.1)
@@ -325,30 +304,11 @@ def plot_unweighted_group_latency(label_dfs_hash):
         for label in label_grouped_dfs_hash.keys():
             label_data_hash[label] = avg_group_latency(label_dfs_hash[label], g)
 
-        if g == "Even":
-            g = "偶数グループ"
-        elif g == "Odd":
-            g = "奇数グループ"
-
-        if g == "Test1":
-            g = "グループ1"
-        elif g == "Test2":
-            g = "グループ2"
-
         Graph.plot_graph(
-            #g + "の平均応答時間 [s]",
             "",
-            "時刻",
-            g + "の平均応答時間 [s]",
+            "timestep",
+            "Average latency of "+ g + " [s]",
             label_data_hash, {})
-
-        #Graph.plot_graph(
-        #   #"Average Latency of " + g + " group [s]",
-        #   t,
-        #   "時刻",
-        #   "平均応答時間 [s]",
-        #   label_data_hash, {})
-
 
 
 def plot_unweighted_upsert_latency(label_dfs_hash, label_grouped_dfs_hash):
@@ -409,17 +369,14 @@ def get_total_weighted_avg_hash(label_dfs_hash):
 def plot_weighted_total_latency(label_dfs_hash):
     label_total_weighted_avg_hash = get_total_weighted_avg_hash(label_dfs_hash)
 
-    #Graph.plot_graph(
-    #    "Frequency weighted average latency [s]",
-    #    "timestep",
-    #    "Frequency weighted average latency [s]",
-    #    label_total_weighted_avg_hash, {})
+    #frequency_type = "Periodical"
+    #frequency_type = "Linear"
+    frequency_type = "Spike"
+
     Graph.plot_graph(
-        #"各処理の実行頻度による応答時間の加重平均 [s]",
-        "",
-        "時刻",
-        "各処理の応答時間の実行頻度による加重平均 [s]",
-        #"応答時間の実行頻度による加重平均 [s]",
+        frequency_type + ": " + "Frequency weighted average latency [s]",
+        "timestep",
+        "Frequency weighted average latency [s]",
         label_total_weighted_avg_hash, {})
 
 
