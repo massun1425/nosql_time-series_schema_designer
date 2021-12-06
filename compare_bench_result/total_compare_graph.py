@@ -172,13 +172,13 @@ def plot_statement(l_dfs_hash, statement, target_column, title, y_label, does_pl
             if does_plot_se and 'standard_error' in l_dfs_hash[label][statement][0].columns:
                 label_se_hash[label] = list(
                     l_dfs_hash[label][statement][0]['standard_error'].values.tolist())
-    Graph.plot_graph(title, 'timestep', y_label, label_data_hash, label_se_hash)
+    Graph.plot_graph(title, 'time step', y_label, label_data_hash, label_se_hash)
 
 
 def sumup_each_series(max_ts, dataframes):
     tmp = [0] * (max_ts + 1)
     for df in dataframes:
-        for t, m in df[['timestep', 'mean']].values.tolist():
+        for t, m in df[['timestep', evaluation_result_column]].values.tolist():
             tmp[int(t)] += m
 
     return np.array([t if t is not 0 else np.nan for t in tmp])
@@ -226,7 +226,7 @@ def avg_query_latency(df):
     values = [[]
               for _ in range((max(df['timestep'].values.tolist()) + 1))]
     for ts, v in df.query("name.str.startswith(\"SELECT\")")[
-        ['timestep', 'mean']].values.tolist():
+        ['timestep', evaluation_result_column]].values.tolist():
         values[int(ts)].append(v)
     avg_values = [sum(vs) / len(vs) for vs in values]
     return avg_values
@@ -243,7 +243,7 @@ def count_statement_num_for_each_ts(df, group_name):
 
 def avg_group_latency(df, group_name):
     values = [[] for _ in range((max(df['timestep'].values.tolist()) + 1))]
-    for ts, v in df.query("group == @group_name and name != \"TOTAL\"")[['timestep', 'mean']].values.tolist():
+    for ts, v in df.query("group == @group_name and name != \"TOTAL\"")[['timestep', evaluation_result_column]].values.tolist():
         values[int(ts)].append(v)
 
     statement_counts = count_statement_num_for_each_ts(df, group_name)
@@ -254,7 +254,7 @@ def avg_group_latency(df, group_name):
 def weighted_avg_group_latency(df, group_name):
     weighted_group_totals = [[] for _ in range((max(df['timestep'].values.tolist()) + 1))]
     # TOTAL mean of each group is already weighted
-    for ts, v in df.query("group == @group_name and name == \"TOTAL\"")[['timestep', 'mean']].values.tolist():
+    for ts, v in df.query("group == @group_name and name == \"TOTAL\"")[['timestep', evaluation_result_column]].values.tolist():
         if int(ts) in weighted_group_totals:
             raise Exception
         weighted_group_totals[int(ts)] = v
@@ -268,10 +268,10 @@ def avg_upseart_latency(df, insert_statement_num):
     values = [[]
               for _ in range((max(df['timestep'].values.tolist()) + 1))]
     for ts, v in df.query("name.str.startswith(\"UPDATE\")")[
-        ['timestep', 'mean']].values.tolist():
+        ['timestep', evaluation_result_column]].values.tolist():
         values[int(ts)].append(v)
     for ts, v in df.query("name.str.startswith(\"INSERT\")")[
-        ['timestep', 'mean']].values.tolist():
+        ['timestep', evaluation_result_column]].values.tolist():
         values[int(ts)].append(v)
     if insert_statement_num == 0:
         return [0]
@@ -382,6 +382,7 @@ def plot_weighted_total_latency(label_dfs_hash):
 label_grouped_dfs_hash = {}
 label_dfs_hash = {}
 max_timestep = -1
+evaluation_result_column = 'mean'
 for i in range(1, len(sys.argv)):
     file_name = sys.argv[i]
     dataframe = FileLoader.file2dataframe(file_name)
