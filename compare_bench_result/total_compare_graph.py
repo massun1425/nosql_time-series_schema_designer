@@ -89,20 +89,18 @@ class Graph:
         y_max_lim = 0
         cmap = pyplot.get_cmap("tab10")
         makers = ["o", "v", "^", "<", ">", "1", "2", "3"]
+        order = 100
         for idx, label in enumerate(label_data_hash.keys()):
             if label_data_hash[label] is not None:
-                if idx == 1:
-                  idx = 2
-                elif idx == 2:
-                  idx = 1
-                ax.plot(x, label_data_hash[label], marker=makers[idx], label=Graph.convert_legends(label), linewidth=1.5, markersize=4,color=cmap(idx) )
+                ax.plot(x, label_data_hash[label], marker=makers[idx], label=Graph.convert_legends(label), linewidth=1.2, markersize=4, color=cmap(idx), zorder=order)
+                order -= 1
                 if y_max_lim < max(label_data_hash[label]):
                     y_max_lim = max(label_data_hash[label])
                 # if label in label_cost_hash:
                 # ax.plot(x, label_cost_hash[label], label=label + "_cost", marker="x")
                 if bool(label_se_hash) and not any([np.isnan(se) for se in label_se_hash[label]]):
                     doubled_se_interval = [se * 2 for se in label_se_hash[label]]
-                    ax.errorbar(x, label_data_hash[label], doubled_se_interval, fmt='o', capsize=2, ecolor='black', markeredgecolor = "black", color='w')
+                    ax.errorbar(x, label_data_hash[label], doubled_se_interval, fmt='o', capsize=2, ecolor=cmap(idx), markeredgecolor = cmap(idx), color=cmap(idx))
 
         #pyplot.rcParams["font.size"] = 13
         pyplot.title(Graph.title_with_newline(title))
@@ -112,10 +110,11 @@ class Graph:
 
         pyplot.tick_params(labelsize=13)
         ax.set_ylim(ymin=0)
-        ax.set_ylim(ymax=y_max_lim * 1.1)
+        ax.set_ylim(ymax=y_max_lim * 1.05)
         ax.set_xlim(xmin=0)
         ax.set_xlim(xmax=max(x))
-        pyplot.legend()
+        pyplot.legend(fontsize=9, ncol=2)
+        #pyplot.legend(bbox_to_anchor=(0, -0.25), loc='upper left', borderaxespad=0, fontsize=8)
         output_dir= DIR_NAME + "/figs/"
         Path(output_dir).mkdir(parents=True, exist_ok=True)
         fig.savefig(output_dir + title.split('--')[-1].strip(" ") + "_" + y_label.strip(" ") + ".pdf")
