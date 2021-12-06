@@ -75,6 +75,10 @@ module NoSE
               : migrator.migrate(timestep, options[:migrate_async])
 
             indexes_for_this_timestep = result.indexes_used_in_plans(timestep)
+            indexes_for_this_timestep.each do |index_for_this_timestep|
+              raise "used index is not loaded: #{index_for_this_timestep.key}" if backend.index_empty? index_for_this_timestep
+            end
+
             not_collected_indexes = indexes_for_this_timestep.select{|i| not index_values.has_key?(i)}
             index_values.merge!(index_values_by_mysql(not_collected_indexes, backend, loader, options[:loader], options[:num_iterations]))
 
