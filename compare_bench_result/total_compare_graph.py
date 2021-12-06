@@ -5,6 +5,7 @@ import matplotlib.pyplot as pyplot
 import pyparsing as pp
 import japanize_matplotlib
 import numpy as np
+from sklearn.metrics import r2_score
 
 # 総実行時間
 # 1. 各時刻の各処理の応答時間に実行頻度を掛け合わせる (各処理の加重した応答時間)
@@ -35,6 +36,8 @@ class FileLoader:
         df['cost'] = df.cost.apply(lambda  x: float(x) if x else np.nan)
         if 'standard_error' in column:
             df['standard_error'] = df['standard_error'].astype('float64')
+        if 'middle_mean' in column:
+            df['middle_mean'] = df.middle_mean.apply(lambda  x: float(x) if x else np.nan)
         return df
 
     @classmethod
@@ -150,16 +153,28 @@ def plot_queries(
             #Graph.plot_graph(statement, 'timesteps', 'Latency [s]', label_data_hash, label_se_hash)
         else:
             if statement.split('_')[1].startswith("SELECT"):
-                plot_statement(label_dfs_hash, statement, 'mean', statement.split("--")[1], 'Latency [s]', True)
+                plot_statement(label_dfs_hash, statement, evaluation_result_column, statement.split("--")[1], 'Latency [s]', True)
                 plot_statement(label_dfs_hash, statement, 'cost', "COST" + "\n" + statement, 'Estimated Cost', False)
                 continue
             elif "TOTAL_TOTAL" == statement:
-                plot_statement(label_dfs_hash, statement, 'mean',"Frequency-weighted Total Latency [s]", 'Weighted latency [s]', False)
+            #    plot_statement(label_dfs_hash, statement, evaluation_result_column,"Frequency-weighted Total Latency [s]", 'Weighted latency [s]', False)
                 continue
             elif "TOTAL" in statement:
-                plot_statement(label_dfs_hash, statement, 'mean', statement, 'Weighted latency [s]', False)
+            #    plot_statement(label_dfs_hash, statement, evaluation_result_column, statement, 'Weighted latency [s]', False)
                 continue
             raise('statement not match' + statement)
+
+
+def calculate_r2(label_dfs_hash):
+    for label in label_dfs_hash.keys():
+        print("=====================================")
+        print(label)
+        print("=====================================")
+        for statement in label_dfs_hash[label].keys():
+            actual = list(label_dfs_hash[label][statement][0]['mean'].values)
+            estimated = list(label_dfs_hash[label][statement][0]['cost'].values)
+            print(statement)
+            print(r2_score(actual, estimated))
 
 
 def plot_statement(l_dfs_hash, statement, target_column, title, y_label, does_plot_se):
@@ -395,12 +410,12 @@ for i in range(1, len(sys.argv)):
     label_dfs_hash[label] = dataframe
     label_grouped_dfs_hash[label] = group_dfs_by_statement(statement_dfs)
 
-
 DIR_NAME = dir_name
 plot_weighted_total_latency(label_dfs_hash)
 plot_unweighted_group_latency(label_dfs_hash)
 plot_unweighted_query_latency(label_dfs_hash)
 plot_unweighted_upsert_latency(label_dfs_hash, label_grouped_dfs_hash)
-plot_queries(max_timestep, label_grouped_dfs_hash, )
+plot_queries(max_timestep, label_grouped_dfs_hash)
+#calculate_r2(label_grouped_dfs_hash)
 show_upseart_plan_num(label_grouped_dfs_hash)
 show_total_weighted_latency_diff(label_dfs_hash)
