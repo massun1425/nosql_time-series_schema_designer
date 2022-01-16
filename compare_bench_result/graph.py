@@ -12,21 +12,21 @@ class Graph:
             "cyclic_first_80per_15230144000_12ts": "first time step freq.",
             "cyclic_last_80per_15230144000_12ts": "last time step freq.",
             "cyclic_static_80per_15230144000_12ts": "average freq.",
-            "cyclic_ideal_80per_15230144000_12ts": "ideal optimization",
+            "cyclic_ideal_80per_15230144000_12ts_2": "ideal optimization",
 
             "monotonic_prop_80per_15230144000_12ts": "prop.",
             "monotonic_prop_80per_no_iterative_15230144000_12ts": "prop. without cf pruning",
             "monotonic_first_80per_15230144000_12ts": "first time step freq.",
             "monotonic_last_80per_15230144000_12ts": "last time step freq.",
             "monotonic_static_80per_15230144000_12ts": "average freq.",
-            "monotonic_ideal_80per_15230144000_12ts": "ideal optimization",
+            "monotonic_ideal_80per_15230144000_12ts_2": "ideal optimization",
 
             "peak_prop_80per_15230144000_12ts": "prop.",
             "peak_prop_80per_no_iterative_15230144000_12ts": "prop. without cf pruning",
             "peak_first_80per_15230144000_12ts": "first time step freq.",
             "peak_last_80per_15230144000_12ts": "last time step freq.",
             "peak_static_80per_15230144000_12ts": "average freq.",
-            "peak_ideal_80per_15230144000_12ts": "ideal optimization"
+            "peak_ideal_80per_15230144000_12ts_2": "ideal optimization",
         }
         if legend in convert_hash:
             return convert_hash[legend]
