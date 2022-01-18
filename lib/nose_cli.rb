@@ -651,6 +651,7 @@ require_relative 'nose_cli/search_bench'
 require_relative 'nose_cli/search_pattern'
 require_relative 'nose_cli/texify'
 require_relative 'nose_cli/why'
+require_relative 'nose_cli/calibrate_filtering_cost'
 
 # Only include the console command if pry is available
 begin
