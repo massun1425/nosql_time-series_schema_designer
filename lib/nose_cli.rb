@@ -131,7 +131,7 @@ module NoSE
 
         if options[:frequency_type] == "ideal"
           search = Search::IdealSearch.new(workload, cost_model, objective, by_id_graph, options[:prunedCF])
-        elsif  (workload.instance_of?(TimeDependWorkload) and options[:iterative] and workload.timesteps > 3)
+        elsif  (workload.instance_of?(TimeDependWorkload) && options[:iterative] && workload.timesteps > 3)
           search = Search::IterativeSearch.new(workload, cost_model, objective, by_id_graph, options[:prunedCF])
         else
           search = Search::Search.new(workload, cost_model, objective, by_id_graph, options[:prunedCF])
@@ -246,7 +246,7 @@ module NoSE
         file.puts Formatador.parse("[blue]#{header}[/]")
         indexes.each_with_index do |index_set, ts|
           file.puts Formatador.parse("[blue]for timestep: #{ts}[/]")
-          index_set = [index_set] unless index_set.is_a?(Array) or index_set.is_a?(Set)
+          index_set = [index_set] unless index_set.is_a?(Array) || index_set.is_a?(Set)
           index_set.sort_by(&:hash_str).each { |index| file.puts index.inspect }
         end
         file.puts
