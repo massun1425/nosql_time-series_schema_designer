@@ -31,7 +31,7 @@ module NoSE
       class_option :prunedCF, type: :boolean, default: true,
                  desc: 'whether enumerate CFs using pruned index enumerator or not'
       class_option :enumerator, type: :string, default: 'graph_based',
-                   enum: %w(default pruned simple graph_based baseline),
+                   enum: %w(basic graph_based graph_based_cluster_order graph_based_plane_subgraph),
                    desc: 'the objective function to use in the ILP'
       class_option :iterative, type: :boolean, default: true,
                    desc: 'whether execute optimization in iterative method'
@@ -144,24 +144,18 @@ module NoSE
       # @return [Search::Index]
       def enumerate_indexes(workload, cost_model)
         STDERR.puts "enumerate column families"
-        if options[:enumerator] == "pruned"
-          enumerated_indexes =
-              PrunedIndexEnumerator.new(workload, cost_model,
-                                        options[:is_shared_field_threshold], 2,2, choice_limit_size: options[:choice_limit]) \
-                                            .indexes_for_workload.to_a
-        elsif options[:enumerator] == "graph_based"
+        if options[:enumerator] == "graph_based"
           enumerated_indexes =
             GraphBasedIndexEnumerator.new(workload, cost_model, 2, options[:choice_limit]) \
                                             .indexes_for_workload.to_a
-        elsif options[:enumerator] == "baseline"
+        elsif options[:enumerator] == "graph_based_cluster_order"
           enumerated_indexes =
-            BaseLineIndexEnumerator.new(workload, cost_model).indexes_for_workload.to_a
-        elsif options[:enumerator] == "default"
-          enumerated_indexes = IndexEnumerator.new(workload) \
-                                              .indexes_for_workload.to_a
-        elsif options[:enumerator] == "simple"
-          enumerated_indexes = SimpleIndexEnumerator.new(workload) \
-                                              .indexes_for_workload.to_a
+            GraphBasedIndexEnumeratorWithClusteringKeyOrder.new(workload, cost_model, 2, options[:choice_limit]).indexes_for_workload.to_a
+        elsif options[:enumerator] == "graph_based_plane_subgraph"
+          enumerated_indexes =
+            GraphBasedIndexEnumeratorWithPlaneSubgraph.new(workload, cost_model, 2, options[:choice_limit]).indexes_for_workload.to_a
+        elsif options[:enumerator] == "basic"
+          enumerated_indexes = IndexEnumerator.new(workload).indexes_for_workload.to_a
         end
         enumerated_indexes
       end
