@@ -2,39 +2,42 @@
 backend:
   name: cassandra
   hosts:
-    - 127.0.0.1
+    - 'c1'
+    - 'c2'
+    - 'c3'
+    - 'c4'
+    - 'c5'
   port: 9042
-  keyspace: rubis
+  keyspace: tpch
 
 # Cost model name and parameters
 cost_model:
-  name: cassandra
+  name: cassandra_io
 
+  delete_cost: 0.0013287903
+  insert_cost: 0.013329108
   index_cost: 0.0078395645
   partition_cost: 0.0013692786
   row_cost: 1.17093638386496e-005
-  delete_cost: 0.0013287903
-  insert_cost: 0.013329108
+  # calibrated using calibrate_migration_cost command
+  extract_base_cost: 2.4414405250577396
+  extract_cost: 2.775186951089092e-07
+  load_base_cost: 4.953210686501681
+  load_cost: 3.080925040237766e-07
 
-  # aggregation cost
-  count_cost:   0.00013329108
-  sum_cost:     0.00013329108
-  max_cost:     0.00013329108
-  avg_cost:     0.00013329108
-  groupby_cost: 0.00013329108
-
-  # cost for updating under-preparing column families in migration process
-  prepare_delete_cost: 0.000001
-  prepare_insert_cost: 0.000001
+  # <11/4 calibrate with full records for 2 fast queries and 1 medium query>
+  index_cost_io: 0.17793997047272503
+  partition_cost_io: 0.001934687597625356
+  row_cost_io: 3.5572969190523916e-07
+  # </11/4 calibrate with full records for 2 fast queries and 1 medium query>
 
 # Loader-specific configuration
 # The mysql loader is recommended, but csv might work as well if
 # your generated indexes all have path length one
 loader:
   name: mysql
-  host: 127.0.0.1
-
-  database: rubis
+  host: mysql
+  database: tpch
   username: root
   password: root
 
