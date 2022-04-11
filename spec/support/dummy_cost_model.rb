@@ -7,15 +7,23 @@ module NoSE
           include Subtype
 
           def index_lookup_cost(_step)
-            1
+            2
           end
 
           def insert_cost(_step)
-            1
+            0.1
           end
 
           def delete_cost(_step)
-            1
+            0.1
+          end
+
+          def prepare_insert_cost(_step)
+            0
+          end
+
+          def prepare_delete_cost(_step)
+            0
           end
         end
 
