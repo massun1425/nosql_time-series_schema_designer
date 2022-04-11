@@ -1,8 +1,8 @@
-# NoSQL Schema Evaluator (NoSE) CLI
+# NoSQL Time-Series Schema Designer Cli
 
-[![Build Status](https://travis-ci.org/michaelmior/nose-cli.svg?branch=master)](https://travis-ci.org/michaelmior/nose-cli)
-[![Depfu](https://badges.depfu.com/badges/0e30a5c5a7e233ee2900a8a92e52ba64/overview.svg)](https://depfu.com/github/michaelmior/nose-cli?project_id=6966)
-[![Code Coverage](https://scrutinizer-ci.com/g/michaelmior/nose-cli/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/michaelmior/nose-cli/?branch=master)
+## Acknowledgements
+
+This repository is implemented based on the fork of [nose-cli](https://github.com/michaelmior/nose-cli)
 
 ## Installation
 
@@ -10,46 +10,47 @@
 
  * [Ruby](https://www.ruby-lang.org/) 2+
  * [bundler](http://bundler.io/)
- * [Cbc](https://projects.coin-or.org/Cbc) solver (see the [Dockerfile](Dockerfile) for packages on Ubuntu, [Homebrew](https://github.com/coin-or-tools/homebrew-coinor) maybe useful on Mac OS, but has not been tested)
+ * [Gurobi](https://www.gurobi.com/) solver (tested with version 9.1.1)
 
-Once dependencies have been installed, clone the repository and install the necessary Ruby gems
+### How to use
 
-    git clone https://github.com/michaelmior/nose-cli.git
-    cd nose-cli
-    bundle install --without=development mysql
+1. ワークロードファイルを `./time_depend_nosql_schema_designer/workloads/` に格納してください．time depend workload の具体例は `./time_depend_nosql_schema_designer/workloads/time_depend/` 以下に格納しています．
+2. インストールした gurobi optimizer の `libgurobi91.so` ファイルの絶対パスを $GUROBI_LIB へ設定してください．(gurobi 9.1.1 で実験していますが，gurobi のバージョンが異なる場合はファイル名が異なる可能性があります)
+2. `bundle exec nose search` コマンドにワークロードファイルのパスを指定することで，workload に対して適したスキーマ系列・クエリプラン・マイグレーションプランを出力します．TPC-H を周期的に実行頻度が変化するワークロードへ拡張したワークロードである `./time_depend_nosql_schema_designer/workloads/time_depend/tpch_22q_3_dups_cyclic.rb` を最適化する場合のコマンドの具体例を以下に示します．
 
-Examples of the workload input format is given in the `workloads/` directory.
-These workloads should give you a sense of the input format and can be a starting point for your own workloads.
-For example, to run the schema advisor against the workload `rubis`, simply execute the command below
+    ```shell
+    bundle exec nose search time_depend/tpch_22q_3_dups_cyclic
+    ```
 
-    bundle exec nose search rubis
+    また，search コマンドを実行する際に幾つかのオブションを指定することが出来ます．下記のコマンドは，ストレージ容量を $STORAGE_LIMIT の値に制限し，time_series_schemas.txt へ最適化結果を出力しています．
 
-If you are prompted, accept the default configuration.
-Each recommended physical structure is referred to as an "index" and will be the first set of outputs.
-These indexes will be followed by a list of plans for each query which makes use of these indexes.
-More information on the other commands available can be found with `bundle exec nose help`.
-If you have any questions, please [open an issue](https://github.com/michaelmior/NoSE/issues/new) or contact [@michaelmior](https://github.com/michaelmior/).
+    ```shell
+    bundle exec nose search time_depend/tpch_22q_3_dups_cyclic --max_space ${STORAGE_LIMIT} > ./time_series_schemas.txt
+    ```
 
-## Development
+3. search コマンドの最適化結果は以下のフォーマットを取ります．最適化した結果を txt フォーマットと json フォーマットで出力します．json フォーマットは，ベンチマークを実行するコマンドである td_benchmark コマンドへ入力するために使用します．
 
-Testing has been done with Ruby 2+ but most of the code should also run under the latest [JRuby](http://jruby.org/).
-However, under JRuby, any code depending on C extensions or MRI internals should be excluded with `--without=development mysql`.
+    ```txt
+    // search output
+    <txt format>
+    // search result in more readable txt format
+    </txt format>
+    <json format>
+    // seach result in json format to input into benchmark command
+    </json format>
+    ```
 
-All source code is documented and more details on the command line tool can be retrieved by running `bundle exec nose help`.
-You can view complete documentation by running `bundle exec rake doc` and viewing the output in the `doc/` directory.
-Tests are written using [RSpec](http://rspec.info/) and can be executed with `bundle exec rspec`.
-If you do not have a copy of the Cbc solver available, you can exclude tests depending on it with `--tag ~solver`.
+4. ベンチマークの事前準備として，mysql と cassandra の host 名と port を `./nose.yml` で指定します．
+5. search コマンドの出力から json スキーマを取り出し，td_benchmark コマンドへ入力することで，スキーマのベンチマークを取得します．time_series_schemas.txt の json 部分を抜き出したファイルを time_series_schemas.json ファイルへ出力した場合に，このファイルのベンチマークを取得するコマンドの例を以下に示します．
+    ```shell
+    bundle exec nose td_benchmark time_series_schemas.json
+    ```
 
-Some commands require a configuration file in lieu of command line options.
-An example configuration file for the different components of NoSE is given in [nose.yml.example](data/nose-cli/nose.yml.example).
-Unfortunately, the line between what is configured in the configuration file and command line flags is currently somewhat blurry.
+    td_benchmark コマンドでは以下の処理を行い，各時刻の各クエリの応答時間を計測します．
+    1. 時刻0のスキーマを Cassandra 上に作成
+    2. MySQL から各 column family のレコードを取得し，Cassandra へロード
+    3. 各時刻のクエリを実行し，応答時間を計測
+    4. クエリの性能計測のバックエンドで次の時刻に向けたスキーマの作成・データのロードをマイグレータプロセスで実行
 
-## Acknowledgements
 
-This work was supported by the Natural Sciences and Engineering Research Council of Canada ([NSERC](http://nserc.gc.ca)).
 
-[![NSERC](assets/NSERC-logo.png)](http://nserc.gc.ca)
-
-Hosting of [Coin-OR packages](https://packagecloud.io/michaelmior/coinor/) is generously provided by packagecloud.
-
-[![packagecloud](assets/packagecloud-logo.png)](https://packagecloud.io)
