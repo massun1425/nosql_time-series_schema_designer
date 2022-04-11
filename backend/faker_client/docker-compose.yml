@@ -1,0 +1,12 @@
+version: '3'
+services:
+  mysql:
+    container_name: mysql_rubis
+    build: .
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: rubis
+    ports:
+      - '3306:3306'
+    command: --max_allowed_packet=62505856 --wait_timeout=86400
+

@@ -1,13 +1,13 @@
 var Table = require('mysql-faker').Table,
     insert = require('mysql-faker').insert;
 
-var categories = (new Table('categories', 500));
+var categories = (new Table('categories', 50));
 categories.lorem_words('name', 2);
 
-var regions = (new Table('regions', 50));
+var regions = (new Table('regions', 5));
 regions.lorem_words('name', 2);
 
-var users = (new Table('users', 200000));
+var users = (new Table('users', 20000));
 users.name_firstName('firstname')
      .name_lastName('lastname')
      .random_uuid('nickname')
@@ -18,7 +18,7 @@ users.name_firstName('firstname')
      .date_past('creation_date')
      .random_number('region', {min: 1, max: regions.count});
 
-var items = (new Table('items', 2000000));
+var items = (new Table('items', 200000));
 items.lorem_words('name')
      .lorem_paragraph('description')
      .finance_amount('initial_price')
@@ -32,7 +32,7 @@ items.lorem_words('name')
      .random_number('seller', {min: 1, max: users.count})
      .random_number('category', {min: 1, max: categories.count});
 
-var bids = (new Table('bids', 20000000));
+var bids = (new Table('bids', 2000000));
 bids.random_number('qty', {min: 1, max: 5})
     .finance_amount('bid')
     .finance_amount('max_bid')
@@ -40,7 +40,7 @@ bids.random_number('qty', {min: 1, max: 5})
     .random_number('user', {min: 1, max: users.count})
     .random_number('item', {min: 1, max: items.count});
 
-var comments = (new Table('comments', 10000000));
+var comments = (new Table('comments', 1000000));
 comments.random_number('rating', {min: -5, max: 5})
         .date_past('date')
         .lorem_sentences('comment')
@@ -48,7 +48,7 @@ comments.random_number('rating', {min: -5, max: 5})
         .random_number('to_user', {min: 1, max: users.count})
         .random_number('item', {min: 1, max: items.count});
 
-var buy_now = (new Table('buynow', 2000000));
+var buy_now = (new Table('buynow', 200000));
 buy_now.random_number('qty', {min: 1, max: 3})
        .date_past('date')
        .random_number('buyer', {min: 1, max: users.count})
@@ -63,7 +63,7 @@ insert([
   comments,
   buy_now
 ], {
-  host: 'localhost',
+  host: 'mysql',
   user: 'root',
   password: 'root',
   database: 'rubis'

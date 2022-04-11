@@ -1,0 +1,87 @@
+version: '3'
+services:
+  c1:
+    hostname: c1
+    container_name: c1_wakuta
+    build: ./backend/cassandra
+    ports:
+      - '7000:7000'
+      - '7001:7001'
+      - '7199:7199'
+      - '9042:9042'
+      - '9160:9160'
+    tty: true
+    restart: always
+    environment:
+      - CASSANDRA_LISTEN_ADDRESS=c1
+  c2:
+    hostname: c2
+    container_name: c2_wakuta
+    build: ./backend/cassandra
+    command: /bin/bash -c "sleep 10 && /docker-entrypoint.sh cassandra -f -R"
+    restart: always
+    ports:
+      - '9043:9042'
+    tty: true
+    environment:
+      - CASSANDRA_LISTEN_ADDRESS=c2
+      - CASSANDRA_SEEDS=c1,c3,c4,c5
+  c3:
+    hostname: c3
+    container_name: c3_wakuta
+    build: ./backend/cassandra
+    command: /bin/bash -c "sleep 20 && /docker-entrypoint.sh cassandra -f -R"
+    restart: always
+    ports:
+      - '9044:9042'
+    tty: true
+    environment:
+      - CASSANDRA_LISTEN_ADDRESS=c3
+      - CASSANDRA_SEEDS=c1,c2,c4,c5
+  c4:
+    hostname: c4
+    container_name: c4_wakuta
+    build: ./backend/cassandra
+    command: /bin/bash -c "sleep 25 && /docker-entrypoint.sh cassandra -f -R"
+    restart: always
+    ports:
+      - '9045:9042'
+    tty: true
+    environment:
+      - CASSANDRA_LISTEN_ADDRESS=c4
+      - CASSANDRA_SEEDS=c1,c2,c3,c5
+  c5:
+    hostname: c5
+    container_name: c5_wakuta
+    build: ./backend/cassandra
+    command: /bin/bash -c "sleep 30 && /docker-entrypoint.sh cassandra -f -R"
+    restart: always
+    ports:
+      - '9046:9042'
+    tty: true
+    environment:
+      - CASSANDRA_LISTEN_ADDRESS=c5
+      - CASSANDRA_SEEDS=c1,c2,c3,c4
+  nose:
+    container_name: nose_migrate
+    build: .
+    tty: true
+  mysql:
+    container_name: mysql_rubis
+    build: ./backend/mysql_rubis
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: rubis
+    ports:
+      - '3306:3306'
+    command: --max_allowed_packet=62505856 --wait_timeout=86400 --max_heap_table_size=18589934592
+  client:
+    container_name: faker_client
+    build: ./backend/faker_client
+    tty: true
+  rubis_reducer:
+    container_name: rubis_reducer
+    build: ./backend/rubis_reducer
+    environment:
+      - MYSQL_HOST=mysql
+    tty: true

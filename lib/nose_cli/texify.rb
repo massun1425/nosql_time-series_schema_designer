@@ -85,7 +85,7 @@ module NoSE
           when Plans::IndexLookupPlanStep
             "Request \\textbf{#{tex_escape step.index.key}}"
           when Plans::FilterPlanStep
-            "Filter by #{texify_fields((step.eq + [step.range]).compact)}"
+            "Filter by #{texify_fields((step.eq + [step.ranges]).compact)}"
           when Plans::SortPlanStep
             "Sort by #{texify_fields step.sort_fields}"
           when Plans::LimitPlanStep

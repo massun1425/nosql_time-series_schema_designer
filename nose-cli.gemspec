@@ -20,15 +20,19 @@ Gem::Specification.new do |s|
   s.add_dependency 'representable', '= 3.0.0'
   s.add_dependency 'table_print', '~> 1.5.6', '>= 1.5.0'
   s.add_dependency 'thor', '~> 0.19.4'
+  s.add_dependency 'mysql2', '~> 0.5.3' # this is used for the loader for performance
 
   s.add_development_dependency 'aruba', '~> 0.14.2'
   s.add_development_dependency 'binding_of_caller', '~> 0.7.2'
-  s.add_development_dependency 'fakefs', '~> 0.20.0'
+  s.add_development_dependency 'fakefs', '~> 0.14.2'
   s.add_development_dependency 'pry-nav'
+  s.add_development_dependency 'statsample'
+  s.add_development_dependency 'sigdump'
   s.add_development_dependency 'pry-rescue'
   s.add_development_dependency 'rspec', '~> 3.6.0', '>= 3.5.0'
   s.add_development_dependency 'rspec-core', '~> 3.6.0', '>= 3.6.0'
   s.add_development_dependency 'rspec-collection_matchers', '~> 1.1.3', '>= 1.1.0'
   s.add_development_dependency 'scrutinizer-ocular', '~> 1.0.1', '>= 1.0.0'
   s.add_development_dependency 'simplecov', '~> 0.14.1'
+  s.add_development_dependency 'rbtrace', '~> 0.4.14'
 end

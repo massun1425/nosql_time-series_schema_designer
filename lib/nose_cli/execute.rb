@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'table_print'
+require 'gruff'
 
 module NoSE
   module CLI
@@ -19,20 +20,20 @@ module NoSE
       shared_option :mix
 
       option :num_iterations, type: :numeric, default: 100,
-                              banner: 'the number of times to execute each ' \
+             banner: 'the number of times to execute each ' \
                                       'statement'
       option :repeat, type: :numeric, default: 1,
-                      banner: 'how many times to repeat the benchmark'
+             banner: 'how many times to repeat the benchmark'
       option :group, type: :string, default: nil, aliases: '-g',
-                     banner: 'restrict the benchmark to statements in the ' \
+             banner: 'restrict the benchmark to statements in the ' \
                              'given group'
       option :fail_on_empty, type: :boolean, default: true,
-                             banner: 'abort if a column family is empty'
+             banner: 'abort if a column family is empty'
       option :totals, type: :boolean, default: false, aliases: '-t',
-                      banner: 'whether to include group totals in the output'
+             banner: 'whether to include group totals in the output'
       option :format, type: :string, default: 'txt',
-                      enum: %w(txt csv), aliases: '-f',
-                      banner: 'the format of the output data'
+             enum: %w(txt csv), aliases: '-f',
+             banner: 'the format of the output data'
 
       def execute(plans_name)
         # Load the execution plans
@@ -132,12 +133,12 @@ module NoSE
           table.each do |group|
             group.measurements.each do |measurement|
               csv << [
-                group.label,
-                group.group,
-                measurement.name,
-                measurement.weight,
-                measurement.mean,
-                measurement.estimate
+                  group.label,
+                  group.group,
+                  measurement.name,
+                  measurement.weight,
+                  measurement.mean,
+                  measurement.estimate
               ]
             end
           end
@@ -148,8 +149,7 @@ module NoSE
 
       # Get the average execution time for a single query plan
       # @return [Measurements::Measurement]
-      def bench_query(backend, indexes, plan, index_values, iterations, repeat,
-                      weight: 1.0)
+      def bench_query(backend, indexes, plan, index_values, iterations, weight: 1.0)
 
         condition_list = execute_conditions plan.params, indexes, index_values,
                                             iterations
@@ -158,13 +158,38 @@ module NoSE
 
         measurement = Measurements::Measurement.new plan, weight: weight
 
-        1.upto(repeat) do
-          # Execute each plan and measure the time
-          start_time = Time.now.utc
-          condition_list.each { |conditions| prepared.execute conditions }
-          elapsed = Time.now.utc - start_time
+        puts "<condition_list>"
+        condition_list.each {|c| puts c}
+        puts "</condition_list>"
 
-          measurement << (elapsed / iterations)
+        retry_times = 10
+        current_times = 0
+        begin
+          run_without_gc do
+            # Execute each plan and measure the time
+            condition_list.map do |conditions|
+
+              start_time = Time.now.utc
+              prepared.execute conditions
+              elapse = Time.now.utc - start_time
+
+              if elapse > 5 # run GC after running slow queries
+                GC.enable
+                GC.start
+                GC.disable
+              end
+
+              elapse
+            end.each {|e| measurement << e}
+          end
+          # plot_each_measurement each_execution_measurements
+        rescue Exception => e
+          current_times += 1
+          STDERR.puts "ThreadError raised. Sleep before next retry, error: #{e.message}"
+          sleep(20)
+          backend.initialize_client
+          retry if current_times < retry_times
+          raise
         end
 
         measurement
@@ -185,7 +210,7 @@ module NoSE
       # Get the average execution time for a single update plan
       # @return [Measurements::Measurement]
       def bench_update(backend, indexes, plan, index_values,
-                       iterations, repeat, weight: 1.0)
+                       iterations, weight: 1.0, nullable_indexes: nil)
         condition_list = execute_conditions plan.params, indexes, index_values,
                                             iterations
 
@@ -198,7 +223,8 @@ module NoSE
             # First check for IDs given as part of the query otherwise
             # get the backend to generate a random ID or take a random value
             condition = condition_list[i - 1][field.id]
-            value = if !condition.nil? && field.is_a?(Fields::IDField)
+
+            value = if !condition.nil?
                       condition.value
                     elsif field.is_a?(Fields::IDField)
                       backend.generate_id
@@ -214,15 +240,13 @@ module NoSE
 
         measurement = Measurements::Measurement.new plan, weight: weight
 
-        1.upto(repeat) do
+        run_without_gc do
           # Execute each plan and measure the time
-          start_time = Time.now.utc
           setting_list.zip(condition_list).each do |settings, conditions|
+            start_time = Time.now.utc
             prepared.each { |p| p.execute settings, conditions }
+            measurement << Time.now.utc - start_time
           end
-          elapsed = Time.now.utc - start_time
-
-          measurement << (elapsed / iterations)
         end
 
         measurement
@@ -237,7 +261,12 @@ module NoSE
             indexes.each do |index|
               values = index_values[index]
               next if values.empty?
-              value = values[i % values.length][condition.field.id]
+              begin
+                value = values[i % values.length][condition.field.id]
+              rescue Exception => e
+                puts e
+                throw e
+              end
               break unless value.nil?
             end
 
@@ -263,6 +292,28 @@ module NoSE
             end]
           end
         end.flatten
+      end
+
+      def plot_each_measurement(measurements)
+        FileUtils.mkdir_p "./measure/"
+        g = Gruff::Line.new
+        g.title = plan.query.comment.strip
+        g.dataxy 'measurement', (0...measurements.size).to_a, measurements
+        g.minimum_value = 0
+        g.write("./measure/#{plan.query.comment.gsub("--", "").strip}.png")
+        puts measurements.inspect
+      end
+
+      def run_without_gc(&block)
+        GC.start
+        sleep 5
+        GC.disable
+
+        res = block.call
+
+        GC.enable
+        GC.start
+        res
       end
     end
   end

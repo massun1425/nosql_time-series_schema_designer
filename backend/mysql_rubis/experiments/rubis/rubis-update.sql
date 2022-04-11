@@ -1,0 +1,15 @@
+alter table regions add column dummy tinyint(1);
+alter table regions alter column dummy set default 1;
+update regions set dummy=1;
+alter table comments change column from_user_id from_user int(10) unsigned not null, algorithm=COPY;
+alter table comments change column to_user_id to_user int(10) unsigned not null, algorithm=COPY;
+alter table categories add column dummy tinyint(1), algorithm=COPY;
+alter table categories alter column dummy set default 1;
+update categories set dummy=1;
+alter table comments change column item_id item int(10) unsigned not null, algorithm=COPY;
+alter table bids change column item_id item int(10) unsigned not null, algorithm=COPY;
+alter table bids change column user_id user int(10) unsigned not null, algorithm=COPY;
+rename table buy_now to buynow;
+alter table buynow change column buyer_id buyer int(10) unsigned not null, algorithm=COPY;
+alter table buynow change column item_id item int(10) unsigned not null, algorithm=COPY;
+alter table users change column nickname nickname varchar(51) not null, algorithm=COPY;

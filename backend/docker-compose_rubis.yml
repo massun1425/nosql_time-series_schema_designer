@@ -1,0 +1,26 @@
+version: '3'
+services:
+  mysql:
+    container_name: mysql_rubis
+    build: ./mysql_rubis
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: rubis
+    ports:
+      - '3306:3306'
+    command: --max_allowed_packet=62505856 --wait_timeout=86400 --max_heap_table_size=18589934592
+  cassandra:
+    container_name: cassandra_migrate
+    build: ./cassandra
+    ports:
+      - '7000:7000'
+      - '7001:7001'
+      - '7199:7199'
+      - '9042:9042'
+      - '9160:9160'
+  client:
+    container_name: faker_client
+    build: 
+      context: ./faker_client
+      dockerfile: Dockerfile
+    tty: true
