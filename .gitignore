@@ -36,6 +36,7 @@
 !.scrutinizer.yml
 !.travis.yml
 !.rubocop.yml
+.dump
 
 ## Log files
 gurobi.log
