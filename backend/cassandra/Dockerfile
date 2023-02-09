@@ -11,7 +11,7 @@ RUN sed -i -e "s/\# file_cache_size_in_mb:.*/file_cache_size_in_mb: 0/g" /etc/ca
 RUN sed -i -e "s/counter_cache_size_in_mb:/counter_cache_size_in_mb: 0/g" /etc/cassandra/cassandra.yaml
 # </disable cache>
 
-RUN sed -i -e "s/\#-Xms4G/-Xms12G/g" /etc/cassandra/jvm.options
-RUN sed -i -e "s/\#-Xmx4G/-Xmx12G/g" /etc/cassandra/jvm.options
+RUN sed -i -e "s/\#-Xms12G/-Xms12G/g" /etc/cassandra/jvm.options
+RUN sed -i -e "s/\#-Xmx12G/-Xmx12G/g" /etc/cassandra/jvm.options
 
 WORKDIR /
