@@ -19,7 +19,7 @@ class Graph:
             "monotonic_first_80per_15230144000_12ts": "first time step freq.",
             "monotonic_last_80per_15230144000_12ts": "last time step freq.",
             "monotonic_static_80per_15230144000_12ts": "average freq.",
-            "monotonic_ideal_80per_15230144000_12ts_2": "ideal optimization",
+            "monotonic_ideal_80per_15230144000_12ts": "ideal optimization",
 
             "peak_prop_80per_15230144000_12ts": "prop.",
             "peak_prop_80per_no_iterative_15230144000_12ts": "prop. without cf pruning",
@@ -27,6 +27,11 @@ class Graph:
             "peak_last_80per_15230144000_12ts": "last time step freq.",
             "peak_static_80per_15230144000_12ts": "average freq.",
             "peak_ideal_80per_15230144000_12ts_2": "ideal optimization",
+
+            "cyclic_subset_80per_4670400000": "prop.",
+            "cyclic_subset_80per_4670400000_cluster_order": "not ignore cluster key order",
+            "cyclic_subset_80per_4670400000_plane_subgraph": "plane subgraph",
+
         }
         if legend in convert_hash:
             return convert_hash[legend]
@@ -70,7 +75,9 @@ class Graph:
         #pyplot.legend(bbox_to_anchor=(0, -0.25), loc='upper left', borderaxespad=0, fontsize=8)
         output_dir = dir_name + "/figs/"
         Path(output_dir).mkdir(parents=True, exist_ok=True)
-        fig.savefig(output_dir + title.split('--')[-1].strip(" ") + "_" + y_label.strip(" ") + ".pdf")
+        if '--' in title:
+            title = title.split('--')[-1].strip(" ")
+        fig.savefig(output_dir + title + "_" + y_label.strip(" ") + ".pdf")
         #fig.show()
 
     @classmethod

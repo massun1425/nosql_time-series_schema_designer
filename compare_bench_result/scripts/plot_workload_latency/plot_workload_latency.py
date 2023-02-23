@@ -3,6 +3,7 @@ from sklearn.metrics import r2_score
 from file_loader import FileLoader
 from graph import Graph
 from upseart import Upseart
+import ast
 
 # 総実行時間
 # 1. 各時刻の各処理の応答時間に実行頻度を掛け合わせる (各処理の加重した応答時間)
@@ -37,32 +38,15 @@ def plot_queries(
         dir_name,
         label_dfs_hash):
     for statement in list(label_dfs_hash.values())[0].keys():
-        if statement.split('_')[1].startswith(
-                "UPDATE") or statement.split('_')[1].startswith("INSERT"):
+        if statement.split('_')[1].startswith("UPDATE") or statement.split('_')[1].startswith("INSERT"):
             continue
-            #label_data_hash = {}
-            #label_se_hash = {}
-            #for label in label_dfs_hash.keys():
-            #    if statement in label_dfs_hash[label]:
-            #        related_dfs1 = label_dfs_hash[label][statement]
-            #        label_data_hash[label] = sumup_each_series(
-            #            max_ts, related_dfs1)
-            #        if 'standard_error' in label_dfs_hash[label][statement][0].columns:
-            #            label_se_hash[label] = list(
-            #                label_dfs_hash[label][statement][0]['standard_error'].values.tolist())
-            #Graph.plot_graph(statement, 'timesteps', 'Latency [s]', label_data_hash, label_se_hash)
-        else:
-            if statement.split('_')[1].startswith("SELECT"):
-                plot_statement(dir_name, label_dfs_hash, statement, EVALUATION_RESULT_COLUMN, statement.split("--")[1], 'Latency [s]', True)
-                plot_statement(dir_name, label_dfs_hash, statement, 'cost', "COST" + "\n" + statement, 'Estimated Cost', False)
-                continue
-            elif "TOTAL_TOTAL" == statement:
-            #    plot_statement(label_dfs_hash, statement, evaluation_result_column,"Frequency-weighted Total Latency [s]", 'Weighted latency [s]', False)
-                continue
-            elif "TOTAL" in statement:
-            #    plot_statement(label_dfs_hash, statement, evaluation_result_column, statement, 'Weighted latency [s]', False)
-                continue
-            raise('statement not match' + statement)
+        if statement.split('_')[1].startswith("SELECT"):
+            plot_statement(dir_name, label_dfs_hash, statement, EVALUATION_RESULT_COLUMN, statement.split("--")[1], 'Latency [s]', True)
+            plot_statement(dir_name, label_dfs_hash, statement, 'cost', "COST" + "\n" + statement, 'Estimated Cost', False)
+            continue
+        elif "TOTAL_TOTAL" == statement or "TOTAL" in statement:
+            continue
+        raise('statement not match' + statement)
 
 
 def calculate_r2(label_dfs_hash):
@@ -132,13 +116,31 @@ def weighted_avg_group_latency(df, group_name):
     weighted_group_totals = [[] for _ in range((max(df['timestep'].values.tolist()) + 1))]
     # TOTAL mean of each group is already weighted
     for ts, v in df.query("group == @group_name and name == \"TOTAL\"")[['timestep', EVALUATION_RESULT_COLUMN]].values.tolist():
-        if int(ts) in weighted_group_totals:
+        if len(weighted_group_totals[int(ts)]) != 0:
             raise Exception
         weighted_group_totals[int(ts)] = v
 
     statement_counts = count_statement_num_for_each_ts(df, group_name)
-    avg_values = [t / statement_counts[idx] for idx, t in enumerate(weighted_group_totals)]
+    # 各時刻の statement 数を，各時刻の合計の合計重みで割ることで，合計重みが1より小さい場合に応答時間を小さく評価することを防ぐ
+    total_weight_per_statement = [sc / wt for sc, wt in zip(statement_counts, get_total_weight_each_timestep(df))]
+    avg_values = [(group_total / statement_counts[idx]) * total_weight_per_statement[idx]
+                  for idx, group_total in enumerate(weighted_group_totals)]
     return avg_values
+
+
+# 各時刻の合計重みを求める．
+def get_total_weight_each_timestep(df):
+    weight_totals = [[] for _ in range((max(df['timestep'].values.tolist()) + 1))]
+    for ts, v in df.query("name != \"TOTAL\"")[['timestep', 'weight']].values.tolist():
+        weights = ast.literal_eval(v)
+        if len(weight_totals[int(ts)]) != 0:
+            weight_totals[int(ts)] = [round(a + b, 5) for a, b in zip(weight_totals[int(ts)], weights)]
+        else:
+            weight_totals[int(ts)] = weights
+    if len(set([tuple(ws) for ws in weight_totals])) > 1:
+        raise Exception("weights of each statement of each time step already has all weights."
+                        + " Therefore the result should be the same")
+    return weight_totals[0]
 
 
 def plot_unweighted_query_latency(dir_name, label_dfs_hash, label_grouped_dfs_hash):
@@ -189,6 +191,7 @@ def show_total_weighted_latency_diff(label_dfs_hash, label_grouped_dfs_hash):
             print(" " + str((1 - label1_total_weighted_latency / label2_total_weighted_latency) * 100) + "% reduced")
 
 
+# このメソッドで合計実行頻度が1では無い場合に対応する必要がありそう．
 def get_total_weighted_avg_hash(label_dfs_hash, label_grouped_dfs_hash):
     label_total_weighted_avg_hash = {}
 
@@ -214,9 +217,9 @@ def plot_weighted_total_latency(dir_name, label_dfs_hash, label_grouped_dfs_hash
 
     #frequency_type = "Periodical"
     #frequency_type = "Linear"
-    frequency_type = "Spike"
-    #title = frequency_type + ": " + "Frequency weighted average latency [s]",
-    title = ""
+    #frequency_type = "Spike"
+    frequency_type = "Subset"
+    title = frequency_type + ": " + "Frequency weighted average latency [s]"
 
     Graph.plot_graph(
         dir_name,
