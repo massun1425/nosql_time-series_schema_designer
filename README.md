@@ -15,7 +15,7 @@ cd nosql_time-series_schema_designer_cli
 
  * [Ruby](https://www.ruby-lang.org/) 2+
  * [bundler](http://bundler.io/)
- * [Gurobi](https://www.gurobi.com/) solver (tested with version 9.1.1)
+ * [Gurobi](https://www.gurobi.com/) solver (tested with version 10.0.1)
 
 ### How to use
 
