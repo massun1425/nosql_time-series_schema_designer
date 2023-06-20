@@ -1,9 +1,6 @@
-[submodule "NoSE"]
-	path = NoSE
-	url = git@github.com:Y-Wakuta/td_NoSE.git
 [submodule "td_NoSE"]
 	path = time_depend_nosql_schema_designer
-	url = git@github.com:Y-Wakuta/td_NoSE.git
+	url = https://github.com/Y-Wakuta/nosql_time-series_schema_designer_cli.git
 [submodule "cassandra-loader"]
 	path = cassandra-loader
-	url = git@github.com:Y-Wakuta/cassandra-loader.git
+	url = https://github.com/Y-Wakuta/cassandra-loader.git
