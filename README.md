@@ -45,7 +45,7 @@ cd nosql_time-series_schema_designer_cli
     </json format>
     ```
 
-5. As a preliminary preparation for the benchmark, specify the host name and port of mysql and cassandra in `./nose.yml`.
+5. As a preliminary preparation for the benchmark, specify the host name and port of mysql and cassandra in `./nose.yml`. And please put dumped tpch data to `./backend/mysql_tpch_dump` directory as `tpch_sf_1.sql.zip`.
 6. Run the schema benchmark by extracting the json schema from the output of the search command and inputting it to the td_benchmark command. The following is an example of the command to acquire the benchmark of this file when the file extracted from the json part of time_series_schemas.txt is output to the time_series_schemas.json file.
 
     ```shell
