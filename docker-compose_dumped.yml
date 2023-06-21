@@ -75,9 +75,9 @@ services:
     ports:
       - '3306:3306'
     command: --max_allowed_packet=62505856 --wait_timeout=86400 --tmp_table_size=92949672960 --max_heap_table_size=92949672960 --transaction-isolation=READ-UNCOMMITTED
-  tpch_reducer:
-    container_name: tpch_reducer
-    build: ./backend/tpch_reducer
-    environment:
-      - MYSQL_HOST=mysql
-    tty: true
+  # tpch_reducer: # this service is for debugging using smaller TPC-H tables
+  #   container_name: tpch_reducer
+  #   build: ./backend/tpch_reducer
+  #   environment:
+  #     - MYSQL_HOST=mysql
+  #   tty: true
