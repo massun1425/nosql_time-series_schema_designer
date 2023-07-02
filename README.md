@@ -15,25 +15,25 @@ cd nosql_time-series_schema_designer_cli
 
  * [Ruby](https://www.ruby-lang.org/) 2+
  * [bundler](http://bundler.io/)
- * [Gurobi](https://www.gurobi.com/) solver (tested with version 9.1.1)
+ * [Gurobi](https://www.gurobi.com/) solver (tested with version 10.0.1)
 
 ### How to use
 
-1. ワークロードファイルを `./time_depend_nosql_schema_designer/workloads/` に格納してください．time depend workload の具体例は `./time_depend_nosql_schema_designer/workloads/time_depend/` 以下に格納しています．
-2. インストールした gurobi optimizer の `libgurobi91.so` ファイルの絶対パスを環境変数 GUROBI_LIB へ設定してください．(gurobi 9.1.1 で実験していますが，gurobi のバージョンが異なる場合はファイル名が異なる可能性があります)
-2. `bundle exec nose search` コマンドにワークロードファイルのパスを指定することで，workload に対して適したスキーマ系列・クエリプラン・マイグレーションプランを出力します．TPC-H を周期的に実行頻度が変化するワークロードへ拡張したワークロードである `./time_depend_nosql_schema_designer/workloads/time_depend/tpch_22q_3_dups_cyclic.rb` を最適化する場合のコマンドの具体例を以下に示します．
+1. Store the workload file in `./time_depend_nosql_schema_designer/workloads/`. Specific examples of time depend workload are stored under `./time_depend_nosql_schema_designer/workloads/time_depend/`.
+2. Set the absolute path of the `libgurobi91.so` file of the installed gurobi optimizer to the environment variable `GUROBI_LIB`. (tested with gurobi 9.1.1. If the version of gurobi is different, the file name may be different.)
+3. By specifying the workload file path in the `bundle exec nose search` command, the optimum schema sequence, query plans, and migration plans for workload are output. The following is an example command for optimizing `./time_depend_nosql_schema_designer/workloads/time_depend/tpch_22q_3_dups_cyclic.rb`, which is an extension of TPC-H to a workload whose execution frequency changes periodically.
 
     ```shell
     bundle exec nose search time_depend/tpch_22q_3_dups_cyclic
     ```
 
-    また，search コマンドを実行する際に幾つかのオブションを指定することが出来ます．下記のコマンドは，ストレージ容量を $STORAGE_LIMIT の値に制限し，time_series_schemas.txt へ最適化結果を出力しています．
+    You can also specify some options when executing the search command. The following command limits the storage size to the value of environment variable `STORAGE_LIMIT` and outputs the optimization result to time_series_schemas.txt.
 
     ```shell
     bundle exec nose search time_depend/tpch_22q_3_dups_cyclic --max_space ${STORAGE_LIMIT} > ./time_series_schemas.txt
     ```
 
-3. search コマンドの最適化結果は以下のフォーマットを取ります．最適化した結果を txt フォーマットと json フォーマットで出力します．json フォーマットは，ベンチマークを実行するコマンドである td_benchmark コマンドへ入力するために使用します．
+4. The optimization result of the search command takes the following format. The optimized result is output in txt format and json format. The json format is used to give optimized result to the td_benchmark command, which is the command to run the benchmark.
 
     ```txt
     // search output
@@ -45,18 +45,17 @@ cd nosql_time-series_schema_designer_cli
     </json format>
     ```
 
-4. ベンチマークの事前準備として，mysql と cassandra の host 名と port を `./nose.yml` で指定します．
-5. search コマンドの出力から json スキーマを取り出し，td_benchmark コマンドへ入力することで，スキーマのベンチマークを取得します．time_series_schemas.txt の json 部分を抜き出したファイルを time_series_schemas.json ファイルへ出力した場合に，このファイルのベンチマークを取得するコマンドの例を以下に示します．
+5. As a preliminary preparation for the benchmark, specify the host name and port of mysql and cassandra in `./nose.yml`. And please put dumped tpch data to `./backend/mysql_tpch_dump` directory as `tpch_sf_1.sql.zip`.
+6. Run the schema benchmark by extracting the json schema from the output of the search command and inputting it to the td_benchmark command. The following is an example of the command to acquire the benchmark of this file when the file extracted from the json part of time_series_schemas.txt is output to the time_series_schemas.json file.
+
     ```shell
     bundle exec nose td_benchmark time_series_schemas.json > time_series_benchmark_result.txt
     ```
 
-    td_benchmark コマンドでは以下の処理を行い，各時刻の各クエリの応答時間を計測します．
-    1. 時刻0のスキーマを Cassandra 上に作成
-    2. MySQL から各 column family のレコードを取得し，Cassandra へロード
-    3. 各時刻のクエリを実行し，応答時間を計測
-    4. クエリの性能計測のバックエンドで次の時刻に向けたスキーマの作成・データのロードをマイグレータプロセスで実行
+    The td_benchmark command performs the following processing and measures the response time of each query at each time.
+    1. Create time step 0 schema on Cassandra
+    2. Get records for each column family from MySQL and then load them into Cassandra
+    3. Execute the query for each time step and measure the response time.
+    4. In addition, create a schema and load data for the next time step in the migrator process.
 
-6. time_series_benchmark_result.txt からクエリの応答時間の計測結果のみを抜き出す場合は，`ruby ./compare_bench_result/bench_res_formatter.rb time_series_benchmark_result.txt > time_series_benchmark_result.csv` とすることで，csv ファイルとして各クエリのベンチマーク結果を取得できます．
-
-
+7. If you want to extract only the measurement result of the query latency from `time_series_benchmark_result.txt`, you can get the benchmark result of each query as a csv file by `ruby ./compare_bench_result/bench_res_formatter.rb time_series_benchmark_result.txt> time_series_benchmark_result.csv`.
