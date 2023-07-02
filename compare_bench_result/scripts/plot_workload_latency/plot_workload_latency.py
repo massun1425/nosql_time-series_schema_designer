@@ -191,8 +191,9 @@ def show_total_weighted_latency_diff(label_dfs_hash, label_grouped_dfs_hash):
             print(" " + str((1 - label1_total_weighted_latency / label2_total_weighted_latency) * 100) + "% reduced")
 
 
-# このメソッドで合計実行頻度が1では無い場合に対応する必要がありそう．
+# TODO: このメソッドで合計実行頻度が1では無い場合に対応する必要がありそう．
 def get_total_weighted_avg_hash(label_dfs_hash, label_grouped_dfs_hash):
+    raise Exception("合計実行頻度が1では無い場合に対応する必要あり")
     label_total_weighted_avg_hash = {}
 
     groups = set()
