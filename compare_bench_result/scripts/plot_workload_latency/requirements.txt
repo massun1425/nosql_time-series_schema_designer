@@ -1,0 +1,7 @@
+matplotlib
+pandas
+japanize_matplotlib
+pathlib
+pyparsing
+numpy
+scikit-learn

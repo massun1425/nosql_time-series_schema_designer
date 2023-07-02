@@ -4,12 +4,6 @@ from sklearn.metrics import r2_score
 from file_loader import FileLoader
 from graph import Graph
 
-# 総実行時間
-# 1. 各時刻の各処理の応答時間に実行頻度を掛け合わせる (各処理の加重した応答時間)
-# 2. 各グループごとに、グループ内の処理の加重した応答時間の平均値をとる
-# 3. 時刻ごとにグループの加重した応答時間の平均値を足し合わせる
-# 4. 全ての時刻においてこの値を足し合わせる。
-
 
 class Upseart:
     @classmethod

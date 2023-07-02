@@ -41,3 +41,7 @@
 ## Log files
 gurobi.log
 
+
+__pycache__
+running_time_*
+.idea

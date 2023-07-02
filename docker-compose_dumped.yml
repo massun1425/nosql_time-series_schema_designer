@@ -62,8 +62,8 @@ services:
     environment:
       - CASSANDRA_LISTEN_ADDRESS=c5
       - CASSANDRA_SEEDS=c1,c2,c3
-  nose:
-    container_name: nose_migrate
+  client:
+    container_name: client
     build: .
     tty: true
   mysql:
