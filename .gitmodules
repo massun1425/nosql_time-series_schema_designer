@@ -1,10 +1,10 @@
 [submodule "td_NoSE"]
 	path = time_depend_nosql_schema_designer
-  url = git@github.com:Y-Wakuta/nosql_time-series_schema_designer.git
+  url = https://github.com/Y-Wakuta/nosql_time-series_schema_designer.git
 [submodule "cassandra-loader"]
 	path = cassandra-loader
-	url = git@github.com:Y-Wakuta/cassandra-loader.git
+	url = https://github.com/Y-Wakuta/cassandra-loader.git
 [submodule "backend/mysql_tpch_dump"]
 	path = backend/mysql_tpch_dump
-	url = git@github.com:Y-Wakuta/TPC-H_on_MySQL.git
+  url = https://github.com/Y-Wakuta/TPC-H_on_MySQL.git
 	branch = create_db_from_dump
