@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  mysql:
+    container_name: mysql
+    build: .
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tpch
+    ports:
+      - 3306:3306
+      
