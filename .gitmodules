@@ -4,7 +4,7 @@
 [submodule "cassandra-loader"]
 	path = cassandra-loader
 	url = https://github.com/Y-Wakuta/cassandra-loader.git
-[submodule "backend/mysql_tpch_dump"]
-	path = backend/mysql_tpch_dump
-  url = https://github.com/Y-Wakuta/TPC-H_on_MySQL.git
-	branch = create_db_from_dump
+# [submodule "backend/mysql_tpch_dump"]
+	# path = backend/mysql_tpch_dump
+#   url = https://github.com/Y-Wakuta/TPC-H_on_MySQL.git
+	# branch = create_db_from_dump
