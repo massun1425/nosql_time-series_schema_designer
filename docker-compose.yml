@@ -69,7 +69,7 @@ services:
   mysql:
     container_name: mysql_tpch
     build:
-      context: ./backend/mysql_tpch
+      context: ./backend/mysql_tpch_dump
       args:
         SF: 1
     environment:
