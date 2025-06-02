@@ -1,0 +1,11 @@
+--2025-06-02 23:24:52--  https://tpc.org/tpc_documents_current_versions/download_programs/tools-download5.asp?email=u081076c@ecs.osaka-u.ac.jp
+Resolving tpc.org (tpc.org)... 52.175.245.42
+Connecting to tpc.org (tpc.org)|52.175.245.42|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: unspecified [text/html]
+Saving to: ‘tools-download5.asp?email=u081076c@ecs.osaka-u.ac.jp’
+
+             tools-downlo     [<=>                                   ]       0  --.-KB/s                           tools-downloa     [ <=>                                  ]   3.94K  10.1KB/s               tools-download5.asp?email     [  <=>                                 ]   7.94K  20.4KB/s    in 0.4s    
+
+2025-06-02 23:24:53 (20.4 KB/s) - ‘tools-download5.asp?email=u081076c@ecs.osaka-u.ac.jp’ saved [8129]
+
