@@ -1,0 +1,5 @@
+GlobalVars:
+  Enabled: false
+
+LineLength:
+  Enabled: false
