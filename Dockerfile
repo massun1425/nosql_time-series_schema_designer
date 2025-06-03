@@ -1,11 +1,10 @@
-FROM mysql:8.0.33-debian
+FROM yusukew/nose_environment
 
-# MySQL APTリポジトリを無効化
-RUN rm -f /etc/apt/sources.list.d/mysql.list
+ADD . /nose-cli
 
-RUN apt-get update
-RUN apt-get install -y unzip
+WORKDIR /nose-cli
+RUN rbenv global 2.6.5
+RUN gem install bundler -v 2.4.22
+RUN bundle install
 
-COPY ./validate_join.sh ./
-COPY ./tpch_sf_1.sql.zip ./
-RUN unzip ./tpch_sf_1.sql.zip
+
